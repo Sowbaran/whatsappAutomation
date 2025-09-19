@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElectroShop - Orders</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Copy of admin.html styles for theme consistency */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        :root { --primary: #25D366; --primary-dark: #128C7E; --secondary: #5452EE; --dark: #2D2D3A; --light: #F8F9FA; --gray: #6C757D; --success: #28A745; --warning: #FFC107; --danger: #DC3545; }
+        body { background-color: #f0f2f5; color: #333; line-height: 1.6; }
+        .container { display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: var(--dark); color: white; padding: 20px 0; }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h2 { color: white; display: flex; align-items: center; gap: 10px; }
+        .sidebar-header h2 i { color: var(--primary); }
+        .sidebar-menu { list-style: none; padding: 20px 0; }
+        .sidebar-menu li { padding: 10px 20px; margin: 5px 0; border-left: 4px solid transparent; }
+        .sidebar-menu li:hover, .sidebar-menu li.active { background: rgba(255,255,255,0.1); border-left: 4px solid var(--primary); }
+        .sidebar-menu a { color: white; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0; }
+        .header h1 { color: var(--dark); }
+        .orders-table { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 3px 15px rgba(0,0,0,0.08); margin-top: 20px; }
+        .table-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0e0e0; }
+        .table-header h2 { color: var(--dark); }
+        .search-box { display: flex; align-items: center; background: #f0f2f5; padding: 8px 15px; border-radius: 20px; }
+        .search-box input { border: none; background: transparent; outline: none; margin-left: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px 20px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        th { background: #f8f9fa; font-weight: 600; color: var(--gray); }
+        tr:hover { background: #f8f9fa; }
+        .status { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .pending { background: rgba(255,193,7,0.2); color: var(--warning); }
+        .completed { background: rgba(40,167,69,0.2); color: var(--success); }
+        .processing { background: rgba(84,82,238,0.2); color: var(--secondary); }
+        .action-btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; }
+        .update-btn { background: var(--secondary); color: white; }
+        .update-btn:hover { background: var(--primary-dark); }
+        .delete-btn { background: var(--danger); color: white; }
+        .delete-btn:hover { background: #a71d2a; }
+        /* Modal Styles */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; min-width: 350px; box-shadow: 0 3px 15px rgba(0,0,0,0.15); }
+        .modal-content h3 { margin-bottom: 20px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-bolt"></i> ElectroShop</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="admin.html"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li class="active"><a href="orders.html"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+                <li><a href="products.html"><i class="fas fa-box"></i> Products</a></li>
+                <li><a href="customers.html"><i class="fas fa-users"></i> Customers</a></li>
+                
+                
+            </ul>
+        </aside>
+        <main class="main-content">
+            <div class="header">
+                <h1>Orders</h1>
+            </div>
+            <div class="orders-table">
+                <div class="table-header">
+                    <h2>Order List</h2>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchOrder" placeholder="Search orders...">
+                    </div>
+                </div>
+                <table id="ordersTable">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Total</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Example row -->
+                        <tr>
+                            <td>#1001</td>
+                            <td>John Doe</td>
+                            <td>2025-09-19</td>
+                            <td><span class="status pending">Pending</span></td>
+                            <td>$120.00</td>
+                            <td>
+                                <button class="action-btn update-btn" onclick="openUpdateModal(this)"><i class="fas fa-edit"></i> Update</button>
+                                <button class="action-btn delete-btn" onclick="deleteOrder(this)"><i class="fas fa-trash"></i> Delete</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>#1002</td>
+                            <td>Jane Smith</td>
+                            <td>2025-09-18</td>
+                            <td><span class="status completed">Completed</span></td>
+                            <td>$75.50</td>
+                            <td>
+                                <button class="action-btn update-btn" onclick="openUpdateModal(this)"><i class="fas fa-edit"></i> Update</button>
+                                <button class="action-btn delete-btn" onclick="deleteOrder(this)"><i class="fas fa-trash"></i> Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Modal for Update -->
+            <div class="modal" id="updateModal">
+                <div class="modal-content">
+                    <h3>Update Order</h3>
+                    <form id="updateForm">
+                        <label>Order Status:</label>
+                        <select id="orderStatus">
+                            <option value="pending">Pending</option>
+                            <option value="processing">Processing</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                        <div class="modal-actions">
+                            <button type="button" class="action-btn update-btn" onclick="saveUpdate()">Save</button>
+                            <button type="button" class="action-btn view-btn" onclick="closeUpdateModal()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        // Modal logic
+        let currentRow = null;
+        function openUpdateModal(btn) {
+            currentRow = btn.closest('tr');
+            const statusText = currentRow.querySelector('.status').textContent.trim().toLowerCase();
+            document.getElementById('orderStatus').value = statusText;
+            document.getElementById('updateModal').style.display = 'flex';
+        }
+        function closeUpdateModal() {
+            document.getElementById('updateModal').style.display = 'none';
+        }
+        function saveUpdate() {
+            if (currentRow) {
+                const newStatus = document.getElementById('orderStatus').value;
+                const statusSpan = currentRow.querySelector('.status');
+                statusSpan.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                statusSpan.className = 'status ' + newStatus;
+            }
+            closeUpdateModal();
+        }
+        // Delete logic
+        function deleteOrder(btn) {
+            if (confirm('Are you sure you want to delete this order?')) {
+                btn.closest('tr').remove();
+            }
+        }
+        // Search logic
+        document.getElementById('searchOrder').addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#ordersTable tbody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>

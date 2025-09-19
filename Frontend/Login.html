@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electro Shop - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background:white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 380px;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 14px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .shop-header {
+            background: linear-gradient(to right, #25D366, #128C7E);
+            padding: 16px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shop-logo {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+
+        .shop-name {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .shop-tagline {
+            font-size: 11px;
+            opacity: 0.9;
+            margin-top: 3px;
+        }
+
+        .login-form {
+            padding: 18px;
+        }
+
+        .form-title {
+            text-align: center;
+            margin-bottom: 16px;
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .input-group input {
+          width: 100%;
+          padding: 10px 10px 10px 36px;
+          border: 1px solid #ddd;
+          border-radius: 6px;
+          font-size: 13px;
+          transition: all 0.3s;
+          height: 38px;
+          line-height: 18px;
+          box-sizing: border-box;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #25D366;
+            box-shadow: 0 0 0 2px rgba(37, 211, 102, 0.2);
+        }
+
+        .input-group i {
+          position: absolute;
+          left: 12px;
+          top: 11px;
+          color: #777;
+          font-size: 16px;
+          pointer-events: none;
+        }
+
+        .input-error {
+            color: #e74c3c;
+            font-size: 11px;
+            margin-top: 3px;
+            display: none;
+        }
+
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+
+        .remember {
+            display: flex;
+            align-items: center;
+        }
+
+        .remember input {
+            margin-right: 5px;
+        }
+
+        .forgot-password {
+            color: #25D366;
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(to right, #25D366, #128C7E);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .login-btn:hover {
+            background: linear-gradient(to right, #128C7E, #25D366);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-loading .btn-text {
+            visibility: hidden;
+            opacity: 0;
+        }
+
+        .btn-loading::after {
+            content: "";
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+            border: 2px solid transparent;
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: button-loading-spinner 1s ease infinite;
+        }
+
+        @keyframes button-loading-spinner {
+            from {
+                transform: rotate(0turn);
+            }
+
+            to {
+                transform: rotate(1turn);
+            }
+        }
+
+        .divider {
+            text-align: center;
+            margin: 12px 0;
+            position: relative;
+            font-size: 11px;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 1px;
+            background: #ddd;
+        }
+
+        .divider span {
+            background: white;
+            position: relative;
+            padding: 0 8px;
+            color: #777;
+        }
+
+        .social-login {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .social-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .facebook {
+            background: #3b5998;
+        }
+
+        .google {
+            background: #dd4b39;
+        }
+
+        .twitter {
+            background: #1da1f2;
+        }
+
+        .social-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .signup-link {
+            text-align: center;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .signup-link a {
+            color: #25D366;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 12px;
+            font-size: 10px;
+            color: #777;
+            border-top: 1px solid #eee;
+        }
+
+        /* Animation effects */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .shop-logo {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% {transform: translateX(0);}
+            10%, 30%, 50%, 70%, 90% {transform: translateX(-5px);}
+            20%, 40%, 60%, 80% {transform: translateX(5px);}
+        }
+
+        .shake {
+            animation: shake 0.5s;
+            border-color: #e74c3c !important;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            font-size: 12px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-left: 3px solid #2ecc71;
+        }
+
+        .toast.error {
+            border-left: 3px solid #e74c3c;
+        }
+
+        .toast i {
+            margin-right: 7px;
+            font-size: 14px;
+        }
+
+        .toast.success i {
+            color: #2ecc71;
+        }
+
+        .toast.error i {
+            color: #e74c3c;
+        }
+
+        /* Responsive design */
+        @media (max-width: 480px) {
+            .login-container {
+                max-width: 100%;
+            }
+            
+            .shop-header {
+                padding: 14px;
+            }
+            
+            .login-form {
+                padding: 14px;
+            }
+            
+            .social-login {
+                flex-wrap: wrap;
+            }
+            
+            .remember-forgot {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+            
+            .forgot-password {
+                margin-left: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="shop-header">
+            <div class="shop-logo">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <h1 class="shop-name">Electro Shop</h1>
+            <p class="shop-tagline">Your Premium Electronics Destination</p>
+        </div>
+        
+        <div class="login-form">
+            <h2 class="form-title">Log in to Your Account</h2>
+            
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="email" placeholder="Email or Phone Number" required>
+                <div class="input-error" id="email-error">Please enter a valid email address</div>
+            </div>
+            
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" placeholder="Password" required>
+                <div class="input-error" id="password-error">Password must be at least 6 characters</div>
+            </div>
+            
+            <div class="remember-forgot">
+                <label class="remember">
+                    <input type="checkbox" id="remember"> Remember me
+                </label>
+                <a href="#" class="forgot-password">Forgot password?</a>
+            </div>
+            
+            <button class="login-btn" id="login-btn">
+                <span class="btn-text">Log In</span>
+            </button>
+            
+            <div class="divider">
+                <span>or continue with</span>
+            </div>
+            
+            <div class="social-login">
+                <div class="social-btn facebook">
+                    <i class="fab fa-facebook-f"></i>
+                </div>
+                <div class="social-btn google">
+                    <i class="fab fa-google"></i>
+                </div>
+                <div class="social-btn twitter">
+                    <i class="fab fa-twitter"></i>
+                </div>
+            </div>
+            
+            <div class="signup-link">
+                Don't have an account? <a href="#">Sign up</a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2023 Electro Shop. All rights reserved.</p>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-message">Login successful!</span>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginBtn = document.getElementById('login-btn');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const emailError = document.getElementById('email-error');
+            const passwordError = document.getElementById('password-error');
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            // Email validation regex
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            // Show error function
+            function showError(input, errorElement, message) {
+                input.classList.add('shake');
+                errorElement.style.display = 'block';
+                errorElement.textContent = message;
+                setTimeout(() => {
+                    input.classList.remove('shake');
+                }, 500);
+            }
+            
+            // Hide error function
+            function hideError(errorElement) {
+                errorElement.style.display = 'none';
+            }
+            
+            // Show toast notification
+            function showToast(message, isSuccess = true) {
+                toastMessage.textContent = message;
+                toast.className = isSuccess ? 'toast success' : 'toast error';
+                toast.querySelector('i').className = isSuccess ? 
+                    'fas fa-check-circle' : 'fas fa-exclamation-circle';
+                
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+            
+            // Validate email
+            function validateEmail() {
+                const email = emailInput.value.trim();
+                if (!email) {
+                    showError(emailInput, emailError, 'Email is required');
+                    return false;
+                }
+                
+                if (!emailRegex.test(email)) {
+                    showError(emailInput, emailError, 'Please enter a valid email address');
+                    return false;
+                }
+                
+                hideError(emailError);
+                return true;
+            }
+            
+            // Validate password
+            function validatePassword() {
+                const password = passwordInput.value.trim();
+                if (!password) {
+                    showError(passwordInput, passwordError, 'Password is required');
+                    return false;
+                }
+                
+                if (password.length < 6) {
+                    showError(passwordInput, passwordError, 'Password must be at least 6 characters');
+                    return false;
+                }
+                
+                hideError(passwordError);
+                return true;
+            }
+            
+            // Event listeners for real-time validation
+            emailInput.addEventListener('input', validateEmail);
+            passwordInput.addEventListener('input', validatePassword);
+            
+            // Login button click event
+            loginBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const isEmailValid = validateEmail();
+                const isPasswordValid = validatePassword();
+                
+                if (isEmailValid && isPasswordValid) {
+                    // Simulate login process
+                    loginBtn.classList.add('btn-loading');
+                    
+                    setTimeout(() => {
+                        loginBtn.classList.remove('btn-loading');
+                        showToast('Login successful! Redirecting...', true);
+                        
+                        // Simulate redirect
+                        setTimeout(() => {
+                            alert('Welcome to Electro Shop! This is a demo - in a real app, you would be redirected to the dashboard.');
+                        }, 2000);
+                    }, 1500);
+                } else {
+                    showToast('Please fix the errors to continue', false);
+                }
+            });
+            
+            // Social login buttons
+            const socialButtons = document.querySelectorAll('.social-btn');
+            socialButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const platform = this.classList[1];
+                    showToast(`Sign in with ${platform} clicked - this would redirect to ${platform} authentication in a real app`, true);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

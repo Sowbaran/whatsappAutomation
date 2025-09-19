@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElectroShop - Customers</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        :root { --primary: #25D366; --primary-dark: #128C7E; --secondary: #5452EE; --dark: #2D2D3A; --light: #F8F9FA; --gray: #6C757D; --success: #28A745; --warning: #FFC107; --danger: #DC3545; }
+        body { background-color: #f0f2f5; color: #333; line-height: 1.6; }
+        .container { display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: var(--dark); color: white; padding: 20px 0; }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h2 { color: white; display: flex; align-items: center; gap: 10px; }
+        .sidebar-header h2 i { color: var(--primary); }
+        .sidebar-menu { list-style: none; padding: 20px 0; }
+        .sidebar-menu li { padding: 10px 20px; margin: 5px 0; border-left: 4px solid transparent; }
+        .sidebar-menu li:hover, .sidebar-menu li.active { background: rgba(255,255,255,0.1); border-left: 4px solid var(--primary); }
+        .sidebar-menu a { color: white; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0; }
+        .header h1 { color: var(--dark); }
+        .customers-table { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 3px 15px rgba(0,0,0,0.08); margin-top: 20px; }
+        .table-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0e0e0; }
+        .table-header h2 { color: var(--dark); }
+        .search-box { display: flex; align-items: center; background: #f0f2f5; padding: 8px 15px; border-radius: 20px; }
+        .search-box input { border: none; background: transparent; outline: none; margin-left: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px 20px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        th { background: #f8f9fa; font-weight: 600; color: var(--gray); }
+        tr:hover { background: #f8f9fa; }
+        .action-btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; }
+        .edit-btn { background: var(--secondary); color: white; }
+        .edit-btn:hover { background: var(--primary-dark); }
+        .delete-btn { background: var(--danger); color: white; }
+        .delete-btn:hover { background: #a71d2a; }
+        .add-btn { background: var(--primary); color: white; margin-bottom: 10px; }
+        .add-btn:hover { background: var(--primary-dark); }
+        /* Modal Styles */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; min-width: 350px; box-shadow: 0 3px 15px rgba(0,0,0,0.15); }
+        .modal-content h3 { margin-bottom: 20px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .customer-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-bolt"></i> ElectroShop</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="admin.html"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="orders.html"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+                <li><a href="products.html"><i class="fas fa-box"></i> Products</a></li>
+                <li class="active"><a href="customers.html"><i class="fas fa-users"></i> Customers</a></li>
+                
+                
+            </ul>
+        </aside>
+        <main class="main-content">
+            <div class="header">
+                <h1>Customers</h1>
+            </div>
+            <div class="customers-table">
+                <div class="table-header">
+                    <h2>Customer List</h2>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchCustomer" placeholder="Search customers...">
+                    </div>
+                </div>
+                <table id="customersTable">
+                    <thead>
+                        <tr>
+                            <th>Avatar</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><img src="https://randomuser.me/api/portraits/men/1.jpg" class="customer-avatar" alt="Customer"></td>
+                            <td>John Doe</td>
+                            <td>john@example.com</td>
+                            <td>+1 555-1234</td>
+                            <td>
+                                <button class="action-btn edit-btn" onclick="openEditModal(this)"><i class="fas fa-edit"></i> Edit</button>
+                                <button class="action-btn delete-btn" onclick="deleteCustomer(this)"><i class="fas fa-trash"></i> Delete</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><img src="https://randomuser.me/api/portraits/women/2.jpg" class="customer-avatar" alt="Customer"></td>
+                            <td>Jane Smith</td>
+                            <td>jane@example.com</td>
+                            <td>+1 555-5678</td>
+                            <td>
+                                <button class="action-btn edit-btn" onclick="openEditModal(this)"><i class="fas fa-edit"></i> Edit</button>
+                                <button class="action-btn delete-btn" onclick="deleteCustomer(this)"><i class="fas fa-trash"></i> Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Add/Edit Modal -->
+            <div class="modal" id="customerModal">
+                <div class="modal-content">
+                    <h3 id="modalTitle">Add Customer</h3>
+                    <form id="customerForm">
+                        <label>Name:</label>
+                        <input type="text" id="customerName" required><br><br>
+                        <label>Email:</label>
+                        <input type="email" id="customerEmail" required><br><br>
+                        <label>Phone:</label>
+                        <input type="text" id="customerPhone" required><br><br>
+                        <label>Avatar URL:</label>
+                        <input type="text" id="customerAvatar" required><br><br>
+                        <div class="modal-actions">
+                            <button type="button" class="action-btn edit-btn" onclick="saveCustomer()">Save</button>
+                            <button type="button" class="action-btn view-btn" onclick="closeCustomerModal()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        // Modal logic
+        let editRow = null;
+        function openAddModal() {
+            editRow = null;
+            document.getElementById('modalTitle').textContent = 'Add Customer';
+            document.getElementById('customerForm').reset();
+            document.getElementById('customerModal').style.display = 'flex';
+        }
+        function openEditModal(btn) {
+            editRow = btn.closest('tr');
+            document.getElementById('modalTitle').textContent = 'Edit Customer';
+            document.getElementById('customerName').value = editRow.children[1].textContent;
+            document.getElementById('customerEmail').value = editRow.children[2].textContent;
+            document.getElementById('customerPhone').value = editRow.children[3].textContent;
+            document.getElementById('customerAvatar').value = editRow.children[0].querySelector('img').src;
+            document.getElementById('customerModal').style.display = 'flex';
+        }
+        function closeCustomerModal() {
+            document.getElementById('customerModal').style.display = 'none';
+        }
+        function saveCustomer() {
+            const name = document.getElementById('customerName').value;
+            const email = document.getElementById('customerEmail').value;
+            const phone = document.getElementById('customerPhone').value;
+            const avatar = document.getElementById('customerAvatar').value;
+            if (editRow) {
+                editRow.children[1].textContent = name;
+                editRow.children[2].textContent = email;
+                editRow.children[3].textContent = phone;
+                editRow.children[0].querySelector('img').src = avatar;
+            } else {
+                const table = document.getElementById('customersTable').querySelector('tbody');
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `<td><img src="${avatar}" class="customer-avatar" alt="Customer"></td><td>${name}</td><td>${email}</td><td>${phone}</td><td><button class='action-btn edit-btn' onclick='openEditModal(this)'><i class='fas fa-edit'></i> Edit</button> <button class='action-btn delete-btn' onclick='deleteCustomer(this)'><i class='fas fa-trash'></i> Delete</button></td>`;
+                table.appendChild(newRow);
+            }
+            closeCustomerModal();
+        }
+        function deleteCustomer(btn) {
+            if (confirm('Are you sure you want to delete this customer?')) {
+                btn.closest('tr').remove();
+            }
+        }
+        // Search logic
+        document.getElementById('searchCustomer').addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#customersTable tbody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>
