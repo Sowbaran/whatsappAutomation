@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElectroShop - Products</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        :root { --primary: #25D366; --primary-dark: #128C7E; --secondary: #5452EE; --dark: #2D2D3A; --light: #F8F9FA; --gray: #6C757D; --success: #28A745; --warning: #FFC107; --danger: #DC3545; }
+        body { background-color: #f0f2f5; color: #333; line-height: 1.6; }
+        .container { display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: var(--dark); color: white; padding: 20px 0; }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h2 { color: white; display: flex; align-items: center; gap: 10px; }
+        .sidebar-header h2 i { color: var(--primary); }
+        .sidebar-menu { list-style: none; padding: 20px 0; }
+        .sidebar-menu li { padding: 10px 20px; margin: 5px 0; border-left: 4px solid transparent; }
+        .sidebar-menu li:hover, .sidebar-menu li.active { background: rgba(255,255,255,0.1); border-left: 4px solid var(--primary); }
+        .sidebar-menu a { color: white; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0; }
+        .header h1 { color: var(--dark); }
+        .products-table { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 3px 15px rgba(0,0,0,0.08); margin-top: 20px; }
+        .table-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0e0e0; }
+        .table-header h2 { color: var(--dark); }
+        .search-box { display: flex; align-items: center; background: #f0f2f5; padding: 8px 15px; border-radius: 20px; }
+        .search-box input { border: none; background: transparent; outline: none; margin-left: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px 20px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        th { background: #f8f9fa; font-weight: 600; color: var(--gray); }
+        tr:hover { background: #f8f9fa; }
+        .action-btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; }
+        .edit-btn { background: var(--secondary); color: white; }
+        .edit-btn:hover { background: var(--primary-dark); }
+        .delete-btn { background: var(--danger); color: white; }
+        .delete-btn:hover { background: #a71d2a; }
+        .add-btn { background: var(--primary); color: white; margin-bottom: 10px; }
+        .add-btn:hover { background: var(--primary-dark); }
+        /* Modal Styles */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; min-width: 350px; box-shadow: 0 3px 15px rgba(0,0,0,0.15); }
+        .modal-content h3 { margin-bottom: 20px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .product-img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-bolt"></i> ElectroShop</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="admin.html"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="orders.html"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+                <li class="active"><a href="products.html"><i class="fas fa-box"></i> Products</a></li>
+                <li><a href="customers.html"><i class="fas fa-users"></i> Customers</a></li>
+                
+                
+            </ul>
+        </aside>
+        <main class="main-content">
+            <div class="header">
+                <h1>Products</h1>
+            </div>
+            <div class="products-table">
+                <div class="table-header">
+                    <h2>Product List</h2>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchProduct" placeholder="Search products...">
+                    </div>
+                </div>
+                <table id="productsTable">
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Product Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><img src="https://via.placeholder.com/60" class="product-img" alt="Product"></td>
+                            <td>Smartphone X</td>
+                            <td>Mobiles</td>
+                            <td>$699.00</td>
+                            <td>25</td>
+                            <td>
+                                <button class="action-btn edit-btn" onclick="openEditModal(this)"><i class="fas fa-edit"></i> Edit</button>
+                                <button class="action-btn delete-btn" onclick="deleteProduct(this)"><i class="fas fa-trash"></i> Delete</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><img src="https://via.placeholder.com/60" class="product-img" alt="Product"></td>
+                            <td>Laptop Pro</td>
+                            <td>Computers</td>
+                            <td>$1299.00</td>
+                            <td>10</td>
+                            <td>
+                                <button class="action-btn edit-btn" onclick="openEditModal(this)"><i class="fas fa-edit"></i> Edit</button>
+                                <button class="action-btn delete-btn" onclick="deleteProduct(this)"><i class="fas fa-trash"></i> Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Add/Edit Modal -->
+            <div class="modal" id="productModal">
+                <div class="modal-content">
+                    <h3 id="modalTitle">Add Product</h3>
+                    <form id="productForm">
+                        <label>Product Name:</label>
+                        <input type="text" id="productName" required><br><br>
+                        <label>Category:</label>
+                        <input type="text" id="productCategory" required><br><br>
+                        <label>Price:</label>
+                        <input type="number" id="productPrice" required><br><br>
+                        <label>Stock:</label>
+                        <input type="number" id="productStock" required><br><br>
+                        <label>Image URL:</label>
+                        <input type="text" id="productImage" required><br><br>
+                        <div class="modal-actions">
+                            <button type="button" class="action-btn edit-btn" onclick="saveProduct()">Save</button>
+                            <button type="button" class="action-btn view-btn" onclick="closeProductModal()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        // Modal logic
+        let editRow = null;
+        function openAddModal() {
+            editRow = null;
+            document.getElementById('modalTitle').textContent = 'Add Product';
+            document.getElementById('productForm').reset();
+            document.getElementById('productModal').style.display = 'flex';
+        }
+        function openEditModal(btn) {
+            editRow = btn.closest('tr');
+            document.getElementById('modalTitle').textContent = 'Edit Product';
+            document.getElementById('productName').value = editRow.children[1].textContent;
+            document.getElementById('productCategory').value = editRow.children[2].textContent;
+            document.getElementById('productPrice').value = editRow.children[3].textContent.replace('$','');
+            document.getElementById('productStock').value = editRow.children[4].textContent;
+            document.getElementById('productImage').value = editRow.children[0].querySelector('img').src;
+            document.getElementById('productModal').style.display = 'flex';
+        }
+        function closeProductModal() {
+            document.getElementById('productModal').style.display = 'none';
+        }
+        function saveProduct() {
+            const name = document.getElementById('productName').value;
+            const category = document.getElementById('productCategory').value;
+            const price = document.getElementById('productPrice').value;
+            const stock = document.getElementById('productStock').value;
+            const image = document.getElementById('productImage').value;
+            if (editRow) {
+                editRow.children[1].textContent = name;
+                editRow.children[2].textContent = category;
+                editRow.children[3].textContent = `$${parseFloat(price).toFixed(2)}`;
+                editRow.children[4].textContent = stock;
+                editRow.children[0].querySelector('img').src = image;
+            } else {
+                const table = document.getElementById('productsTable').querySelector('tbody');
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `<td><img src="${image}" class="product-img" alt="Product"></td><td>${name}</td><td>${category}</td><td>$${parseFloat(price).toFixed(2)}</td><td>${stock}</td><td><button class='action-btn edit-btn' onclick='openEditModal(this)'><i class='fas fa-edit'></i> Edit</button> <button class='action-btn delete-btn' onclick='deleteProduct(this)'><i class='fas fa-trash'></i> Delete</button></td>`;
+                table.appendChild(newRow);
+            }
+            closeProductModal();
+        }
+        function deleteProduct(btn) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                btn.closest('tr').remove();
+            }
+        }
+        // Search logic
+        document.getElementById('searchProduct').addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#productsTable tbody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>
