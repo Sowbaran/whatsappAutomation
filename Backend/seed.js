@@ -37,12 +37,13 @@ async function seed() {
         { name: 'Grace', email: 'grace@example.com', phone: '7890123456', address: '159 Spruce St' },
         { name: 'Helen', email: 'helen@example.com', phone: '8901234567', address: '753 Birch St' },
         { name: 'Ian', email: 'ian@example.com', phone: '9012345678', address: '852 Walnut St' },
-        { name: 'Jane', email: 'jane@example.com', phone: '0123456789', address: '951 Chestnut St' }
+        { name: 'Jane', email: 'jane@example.com', phone: '0123456789', address: '951 Chestnut St' },
+        { name: 'Sowbaran', email: 'sowbaran@example.com', phone: '0123456789', address: '951 Chestnut St' }
     ]);
 
     // Seed Orders
     const orders = [];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 12; i++) {
         const cust = customers[i % customers.length];
         const prod = products[i % products.length];
         orders.push({

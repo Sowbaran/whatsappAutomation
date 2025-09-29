@@ -51,7 +51,8 @@ const getSalesmanProfile = async (req, res) => {
 
 const getSalesmanOrders = async (req, res) => {
     try {
-        const orders = await Order.find({ pickedUp: false, salesman: null }).populate('salesman', 'name');
+    // Show only orders that are not picked up and not assigned to any salesman
+    const orders = await Order.find({ pickedUp: false, salesman: null }).populate('salesman', 'name');
         res.json(orders);
     } catch (err) {
         res.status(500).json({ msg: err.message });
@@ -114,7 +115,7 @@ const dropOrder = async (req, res) => {
         const { orderId } = req.params;
         const updatedOrder = await Order.findByIdAndUpdate(
             orderId,
-            { pickedUp: false, pickedUpBy: null, pickedUpAt: null },
+            { pickedUp: false, pickedUpBy: null, pickedUpAt: null, salesman: null },
             { new: true }
         );
         if (!updatedOrder) {

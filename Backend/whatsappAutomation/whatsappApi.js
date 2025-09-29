@@ -19,10 +19,7 @@ app.use(express.json());
 // Connect to MongoDB asynchronously
 async function connectDB() {
   try {
-    await mongoose.connect(process.env.MONGODB, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
+    await mongoose.connect(process.env.MONGODB);
     console.log("MongoDB connected successfully (whatsappApi.js)");
   } catch (err) {
     console.error("MongoDB connection error:", err);
