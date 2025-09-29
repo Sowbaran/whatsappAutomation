@@ -6,7 +6,7 @@
     <title>ElectroShop - Orders</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Copy of admin.html styles for theme consistency */
+        /* Premium Modal Styles */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         :root { --primary: #25D366; --primary-dark: #128C7E; --secondary: #5452EE; --dark: #2D2D3A; --light: #F8F9FA; --gray: #6C757D; --success: #28A745; --warning: #FFC107; --danger: #DC3545; }
         body { background-color: #f0f2f5; color: #333; line-height: 1.6; }
@@ -33,18 +33,80 @@
         tr:hover { background: #f8f9fa; }
         .status { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
         .pending { background: rgba(255,193,7,0.2); color: var(--warning); }
-        .completed { background: rgba(40,167,69,0.2); color: var(--success); }
-        .processing { background: rgba(84,82,238,0.2); color: var(--secondary); }
+    .completed { background: rgba(40,167,69,0.2); color: var(--success); }
+    .processing { background: rgba(84,82,238,0.2); color: var(--secondary); }
+    .product-packaged { background: rgba(255,87,34,0.15); color: #ff5722; font-weight: 600; }
+    .salesman-assigned { background: rgba(255,193,7,0.15); color: #ffc107; font-weight: 600; }
+    .shipment { background: rgba(76,175,80,0.15); color: #4caf50; }
         .action-btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; }
         .update-btn { background: var(--secondary); color: white; }
         .update-btn:hover { background: var(--primary-dark); }
         .delete-btn { background: var(--danger); color: white; }
         .delete-btn:hover { background: #a71d2a; }
-        /* Modal Styles */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 30px; border-radius: 10px; min-width: 350px; box-shadow: 0 3px 15px rgba(0,0,0,0.15); }
-        .modal-content h3 { margin-bottom: 20px; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        /* Premium Modal Styles */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(45,45,58,0.45); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 36px 40px 28px 40px;
+            border-radius: 18px;
+            min-width: 400px;
+            box-shadow: 0 8px 32px rgba(40,167,69,0.18), 0 1.5px 8px rgba(45,45,58,0.12);
+            position: relative;
+            transition: box-shadow 0.2s;
+        }
+        .modal-content h3 {
+            margin-bottom: 18px;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(18,140,126,0.12);
+        }
+        #orderDetailsBody {
+            background: #fff;
+            color: #222;
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 12px rgba(40,167,69,0.08);
+        }
+        #orderDetailsBody ul {
+            margin: 12px 0 0 18px;
+        }
+        #orderDetailsBody li {
+            margin-bottom: 8px;
+            font-size: 1.08rem;
+            font-weight: 500;
+            color: var(--primary-dark);
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .action-btn.view-btn {
+            background: #fff;
+            color: var(--primary-dark);
+            border: 1.5px solid var(--primary-dark);
+            font-weight: 600;
+            box-shadow: 0 1px 4px rgba(18,140,126,0.08);
+        }
+        .action-btn.view-btn:hover {
+            background: var(--primary-dark);
+            color: #fff;
+        }
+        /* Responsive modal */
+        @media (max-width: 600px) {
+            .modal-content {
+                min-width: 90vw;
+                padding: 18px 8vw;
+            }
+            #orderDetailsBody {
+                padding: 12px 4vw;
+            }
+        }
     </style>
 </head>
 <body>
@@ -56,10 +118,11 @@
             <ul class="sidebar-menu">
                 <li><a href="admin.html"><i class="fas fa-home"></i> Dashboard</a></li>
                 <li class="active"><a href="orders.html"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+                <li><a href="/sales_progres"><i class="fas fa-chart-line"></i> Sales Progress</a></li>
                 <li><a href="products.html"><i class="fas fa-box"></i> Products</a></li>
                 <li><a href="customers.html"><i class="fas fa-users"></i> Customers</a></li>
-                
-                
+
+
             </ul>
         </aside>
         <main class="main-content">
@@ -86,32 +149,11 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Example row -->
-                        <tr>
-                            <td>#1001</td>
-                            <td>John Doe</td>
-                            <td>2025-09-19</td>
-                            <td><span class="status pending">Pending</span></td>
-                            <td>$120.00</td>
-                            <td>
-                                <button class="action-btn update-btn" onclick="openUpdateModal(this)"><i class="fas fa-edit"></i> Update</button>
-                                <button class="action-btn delete-btn" onclick="deleteOrder(this)"><i class="fas fa-trash"></i> Delete</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#1002</td>
-                            <td>Jane Smith</td>
-                            <td>2025-09-18</td>
-                            <td><span class="status completed">Completed</span></td>
-                            <td>$75.50</td>
-                            <td>
-                                <button class="action-btn update-btn" onclick="openUpdateModal(this)"><i class="fas fa-edit"></i> Update</button>
-                                <button class="action-btn delete-btn" onclick="deleteOrder(this)"><i class="fas fa-trash"></i> Delete</button>
-                            </td>
-                        </tr>
+                        <!-- Orders will be rendered here -->
                     </tbody>
                 </table>
             </div>
+
             <!-- Modal for Update -->
             <div class="modal" id="updateModal">
                 <div class="modal-content">
@@ -121,7 +163,15 @@
                         <select id="orderStatus">
                             <option value="pending">Pending</option>
                             <option value="processing">Processing</option>
+                            <option value="product packages">Product Packaged</option>
+                            <option value="salesman assigned">Salesman Assigned</option>
+                            <option value="shipment">Shipment</option>
                             <option value="completed">Completed</option>
+                        </select>
+                        <label>Assign Salesman:</label>
+                        <select id="orderSalesman">
+                            <option value="">No Salesman</option>
+                            <!-- Salesmen will be populated here -->
                         </select>
                         <div class="modal-actions">
                             <button type="button" class="action-btn update-btn" onclick="saveUpdate()">Save</button>
@@ -133,32 +183,91 @@
         </main>
     </div>
     <script>
+        let salesmen = [];
+        let ordersData = [];
         // Modal logic
-        let currentRow = null;
+        let editingOrderId = null;
         function openUpdateModal(btn) {
-            currentRow = btn.closest('tr');
-            const statusText = currentRow.querySelector('.status').textContent.trim().toLowerCase();
+            const tr = btn.closest('tr');
+            editingOrderId = tr.dataset.id;
+            const statusText = tr.querySelector('.status').textContent.trim().toLowerCase();
             document.getElementById('orderStatus').value = statusText;
+            // Set current salesman if any
+            const order = ordersData.find(o => o._id === editingOrderId);
+            document.getElementById('orderSalesman').value = order && order.salesman ? order.salesman._id : '';
             document.getElementById('updateModal').style.display = 'flex';
         }
         function closeUpdateModal() {
             document.getElementById('updateModal').style.display = 'none';
         }
-        function saveUpdate() {
-            if (currentRow) {
+        async function saveUpdate() {
+            if (editingOrderId) {
                 const newStatus = document.getElementById('orderStatus').value;
-                const statusSpan = currentRow.querySelector('.status');
-                statusSpan.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
-                statusSpan.className = 'status ' + newStatus;
+                const newSalesman = document.getElementById('orderSalesman').value;
+                const updateData = { status: newStatus };
+                if (newSalesman) updateData.salesman = newSalesman;
+                await fetch(`/api/orders/${editingOrderId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+                document.getElementById('updateModal').style.display = 'none';
+                fetchOrders();
             }
-            closeUpdateModal();
         }
-        // Delete logic
-        function deleteOrder(btn) {
+        async function deleteOrder(btn) {
+            const tr = btn.closest('tr');
+            const id = tr.dataset.id;
             if (confirm('Are you sure you want to delete this order?')) {
-                btn.closest('tr').remove();
+                await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+                fetchOrders();
             }
         }
+        async function fetchOrders() {
+            const res = await fetch('/api/orders');
+            const orders = await res.json();
+            ordersData = orders;
+            renderOrdersTable(orders);
+        }
+        async function fetchSalesmen() {
+            const res = await fetch('/api/salesmen');
+            salesmen = await res.json();
+            const select = document.getElementById('orderSalesman');
+            select.innerHTML = '<option value="">No Salesman</option>';
+            salesmen.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s._id;
+                option.textContent = s.name;
+                select.appendChild(option);
+            });
+        }
+        function renderOrdersTable(orders) {
+            const tbody = document.querySelector('#ordersTable tbody');
+            tbody.innerHTML = '';
+            orders.forEach(order => {
+                const tr = document.createElement('tr');
+                tr.dataset.id = order._id;
+                tr.style.cursor = 'pointer';
+                tr.onclick = () => window.location.href = 'order-details.html?id=' + order._id;
+                const statusClass = order.status.replace(/ /g, '-').toLowerCase();
+                tr.innerHTML = `
+                    <td>${order.orderId}</td>
+                    <td>${order.customer.name}</td>
+                    <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td><span class="status ${statusClass}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></td>
+                    <td>$${order.totalAmount}</td>
+                    <td>
+                        <button class="action-btn update-btn" onclick="event.stopPropagation();openUpdateModal(this)"><i class="fas fa-edit"></i> Update</button>
+                        <button class="action-btn delete-btn" onclick="event.stopPropagation();deleteOrder(this)"><i class="fas fa-trash"></i> Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchOrders();
+            fetchSalesmen();
+        });
         // Search logic
         document.getElementById('searchOrder').addEventListener('input', function() {
             const filter = this.value.toLowerCase();
@@ -168,6 +277,13 @@
                 row.style.display = text.includes(filter) ? '' : 'none';
             });
         });
+
+        // Role-based access control
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        if (!token || role !== 'admin') {
+            window.location.href = '/Login.html';
+        }
     </script>
 </body>
 </html>

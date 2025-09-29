@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElectroShop - Order Details</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+        
+        :root { 
+            --primary: #25D366; 
+            --primary-dark: #128C7E; 
+            --secondary: #5452EE; 
+            --dark: #2D2D3A; 
+            --light: #F8F9FA; 
+            --gray: #6C757D; 
+            --success: #28A745; 
+            --warning: #FFC107; 
+            --danger: #DC3545; 
+        }
+        
+        body { 
+            background-color: #f0f2f5; 
+            color: #333; 
+            line-height: 1.6; 
+        }
+        
+        .container { 
+            display: flex; 
+            min-height: 100vh; 
+        }
+        
+        .sidebar { 
+            width: 250px; 
+            background: var(--dark); 
+            color: white; 
+            padding: 20px 0; 
+        }
+        
+        .sidebar-header { 
+            padding: 0 20px 20px; 
+            border-bottom: 1px solid rgba(255,255,255,0.1); 
+        }
+        
+        .sidebar-header h2 { 
+            color: white; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+        
+        .sidebar-header h2 i { 
+            color: var(--primary); 
+        }
+        
+        .sidebar-menu { 
+            list-style: none; 
+            padding: 20px 0; 
+        }
+        
+        .sidebar-menu li { 
+            padding: 10px 20px; 
+            margin: 5px 0; 
+            border-left: 4px solid transparent; 
+        }
+        
+        .sidebar-menu li:hover, .sidebar-menu li.active { 
+            background: rgba(255,255,255,0.1); 
+            border-left: 4px solid var(--primary); 
+        }
+        
+        .sidebar-menu a { 
+            color: white; 
+            text-decoration: none; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+        
+        .main-content { 
+            flex: 1; 
+            padding: 20px; 
+            overflow-y: auto; 
+        }
+        
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 30px; 
+            padding-bottom: 15px; 
+            border-bottom: 1px solid #e0e0e0; 
+        }
+        
+        .header h1 { 
+            color: var(--dark); 
+        }
+        
+        /* Order Details Styles */
+        .order-details-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 1024px) {
+            .order-details-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .details-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+            position: relative;
+        }
+        
+        .details-card h2 {
+            color: var(--dark);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .details-card h2 i {
+            color: var(--primary);
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .info-item {
+            margin-bottom: 15px;
+        }
+        
+        .info-label {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .pending { background: rgba(255,193,7,0.2); color: var(--warning); }
+        .completed { background: rgba(40,167,69,0.2); color: var(--success); }
+        .processing { background: rgba(84,82,238,0.2); color: var(--secondary); }
+        .product-packaged { background: rgba(255,87,34,0.15); color: #ff5722; font-weight: 600; }
+        .salesman-assigned { background: rgba(255,193,7,0.15); color: #ffc107; font-weight: 600; }
+        .shipment { background: rgba(76,175,80,0.15); color: #4caf50; }
+        .picked-up { background: rgba(37, 211, 102, 0.2); color: var(--primary); }
+        .paid { background: rgba(40,167,69,0.2); color: var(--success); }
+        .unpaid { background: rgba(220,53,69,0.2); color: var(--danger); }
+        .cancelled { background: rgba(108,117,125,0.2); color: var(--gray); }
+        
+        /* Products Table */
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .products-table th, .products-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .products-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: var(--gray);
+        }
+        
+        .products-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        /* Timeline Styles */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--primary);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+        
+        .timeline-date {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 5px;
+        }
+        
+        .timeline-content {
+            font-size: 15px;
+            color: var(--dark);
+        }
+        
+        .timeline-updated-by {
+            font-size: 12px;
+            color: var(--gray);
+            font-style: italic;
+            margin-top: 3px;
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-btn {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .back-btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        .print-btn {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .print-btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        /* Image Preview */
+        .image-preview {
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .image-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Section Edit Buttons */
+        .section-edit-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .section-edit-btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        /* History Badge */
+        .history-badge {
+            background: var(--primary);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        /* Customer Info Styles */
+        .customer-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .customer-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .customer-details {
+            flex: 1;
+        }
+        
+        .customer-name {
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .customer-contact {
+            color: var(--gray);
+            font-size: 14px;
+        }
+        
+        /* Premium Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(45, 45, 58, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+            max-height: 85vh; /* Increased from 80vh to 85vh */
+            overflow: hidden;
+            transform: scale(0.9);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            flex-direction: column; /* Added to ensure proper layout */
+        }
+
+        .modal-overlay.active .modal-container {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0; /* Prevent header from shrinking */
+        }
+
+        .modal-header h3 {
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 30px;
+            max-height: calc(85vh - 160px); /* Adjusted calculation for better fit */
+            overflow-y: auto;
+            flex: 1; /* Allow body to take available space */
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .modal-footer {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            flex-shrink: 0; /* Prevent footer from shrinking */
+        }
+
+        .modal-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
+        }
+
+        .modal-btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .modal-btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Products Modal specific styling */
+        #productsModal .modal-container {
+            max-width: 800px; /* Keep the wider width for products modal */
+        }
+
+        #productsModal .modal-body {
+            max-height: calc(85vh - 160px); /* Consistent height calculation */
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                padding: 10px 0;
+            }
+            
+            .sidebar-menu {
+                display: flex;
+                overflow-x: auto;
+                padding: 10px 0;
+            }
+            
+            .sidebar-menu li {
+                padding: 10px 15px;
+                white-space: nowrap;
+                border-left: none;
+                border-bottom: 4px solid transparent;
+            }
+            
+            .sidebar-menu li:hover, .sidebar-menu li.active {
+                border-left: none;
+                border-bottom: 4px solid var(--primary);
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .section-edit-btn {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin-top: 10px;
+                width: 100%;
+            }
+            
+            .customer-info {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-container {
+                width: 95%;
+                max-height: 90vh; /* Increased for mobile */
+                margin: 20px;
+            }
+
+            .modal-header {
+                padding: 20px;
+            }
+
+            .modal-body {
+                padding: 20px;
+                max-height: calc(90vh - 140px); /* Adjusted for mobile */
+            }
+
+            .modal-footer {
+                padding: 15px 20px;
+                flex-direction: column;
+            }
+            
+            /* Mobile specific height adjustments */
+            @media (max-height: 700px) {
+                .modal-container {
+                    max-height: 95vh;
+                }
+                
+                .modal-body {
+                    max-height: calc(95vh - 140px);
+                }
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-bolt"></i> ElectroShop</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="admin.html"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li class="active"><a href="orders.html"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+                <li><a href="products.html"><i class="fas fa-box"></i> Products</a></li>
+                <li><a href="customers.html"><i class="fas fa-users"></i> Customers</a></li>
+                <li><a href="sales_progres.html"><i class="fas fa-chart-line"></i> Sales Progress</a></li>
+            </ul>
+        </aside>
+        <main class="main-content">
+            <div class="header">
+                <h1>Order Details </h1>
+                <div class="action-buttons">
+                    <button class="action-btn print-btn" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <button class="action-btn back-btn" onclick="window.history.back()">
+                        <i class="fas fa-arrow-left"></i> Back to Orders
+                    </button>
+                </div>
+            </div>
+            
+            <div class="order-details-container">
+                <!-- Order Information -->
+                <div class="details-card">
+                    <h2><i class="fas fa-info-circle"></i> Order Information</h2>
+                    <button class="section-edit-btn" onclick="openModal('orderModal')">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Order ID</div>
+                            <div class="info-value" id="orderId">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Customer</div>
+                            <div class="info-value" id="customer">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Order Date</div>
+                            <div class="info-value" id="orderDate">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Total Amount</div>
+                            <div class="info-value" id="totalAmount">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Current Status</div>
+                            <div class="info-value">
+                                <span class="status pending" id="orderStatus">Pending</span>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Assigned Salesman</div>
+                            <div class="info-value" id="salesman">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Customer Information -->
+                <div class="details-card">
+                    <h2><i class="fas fa-user"></i> Customer Information</h2>
+                    <button class="section-edit-btn" onclick="openModal('customerModal')">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <div class="customer-info">
+                        <div class="customer-avatar" id="customerAvatar">Loading...</div>
+                        <div class="customer-details">
+                            <div class="customer-name" id="customerName">Loading...</div>
+                            <div class="customer-contact" id="customerEmail">Loading...</div>
+                            <div class="customer-contact" id="customerPhone">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Shipping Address</div>
+                            <div class="info-value" id="shippingAddress">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Billing Address</div>
+                            <div class="info-value" id="billingAddress">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Information -->
+                <div class="details-card">
+                    <h2><i class="fas fa-credit-card"></i> Payment Information</h2>
+                    <button class="section-edit-btn" onclick="openModal('paymentModal')">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Payment Method</div>
+                            <div class="info-value" id="paymentMethod">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Payment Status</div>
+                            <div class="info-value">
+                                <span class="status unpaid" id="paymentStatus">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Transaction ID</div>
+                            <div class="info-value" id="transactionId">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Payment Date</div>
+                            <div class="info-value" id="paymentDate">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Amount Paid</div>
+                            <div class="info-value" id="amountPaid">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Card Ending</div>
+                            <div class="info-value" id="cardEnding">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Products Information -->
+                <div class="details-card" style="grid-column: 1 / -1;">
+                    <h2><i class="fas fa-box-open"></i> Products</h2>
+                    <button class="section-edit-btn" onclick="openModal('productsModal')">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <table class="products-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <!-- Products will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Order History Timeline -->
+                <div class="details-card" style="grid-column: 1 / -1;">
+                    <h2><i class="fas fa-history"></i> Order History Timeline</h2>
+                    <div class="timeline" id="orderTimeline">
+                        <!-- Timeline items will be populated here -->
+                    </div>
+                </div>
+                
+                <!-- Additional Information -->
+                <div class="details-card">
+                    <h2><i class="fas fa-sticky-note"></i> Additional Information</h2>
+                    <button class="section-edit-btn" onclick="openModal('additionalModal')">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <div>
+                        <div class="info-item">
+                            <div class="info-label">Customer Notes</div>
+                            <div class="info-value" id="customerNotes">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Special Instructions</div>
+                            <div class="info-value" id="specialInstructions">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Gift Message</div>
+                            <div class="info-value" id="giftMessage">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Internal Notes</div>
+                            <div class="info-value" id="internalNotes">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="image-preview" id="imagePreview">
+                        <!-- Order image will be displayed here if available -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+
+    <!-- Premium Modal Dialogs -->
+    
+    <!-- Order Information Modal -->
+    <div id="orderModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i class="fas fa-info-circle"></i> Edit Order Information</h3>
+                <button class="modal-close" onclick="closeModal('orderModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="orderForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Order ID</label>
+                            <input type="text" class="form-input" id="editOrderId" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Customer</label>
+                            <input type="text" class="form-input" id="editCustomer">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Order Date</label>
+                            <input type="datetime-local" class="form-input" id="editOrderDate">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Total Amount</label>
+                            <input type="number" class="form-input" id="editTotalAmount" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Current Status</label>
+                            <select class="form-select" id="editStatus">
+                                <option value="pending">Pending</option>
+                                <option value="processing">Processing</option>
+                                <option value="shipped">Shipped</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Assigned Salesman</label>
+                            <select class="form-select" id="editSalesman">
+                                <option value="michael">Michael Rodriguez</option>
+                                <option value="sarah">Sarah Wilson</option>
+                                <option value="james">James Anderson</option>
+                                <option value="emily">Emily Davis</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeModal('orderModal')">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="modal-btn modal-btn-primary" onclick="saveOrderInfo()">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Information Modal -->
+    <div id="customerModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i class="fas fa-user"></i> Edit Customer Information</h3>
+                <button class="modal-close" onclick="closeModal('customerModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="customerForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-input" id="editCustomerName">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-input" id="editCustomerEmail">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" class="form-input" id="editCustomerPhone">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Customer Status</label>
+                            <select class="form-select" id="editCustomerStatus">
+                                <option value="regular">Regular</option>
+                                <option value="premium" selected>Premium</option>
+                                <option value="vip">VIP</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label class="form-label">Shipping Address</label>
+                            <textarea class="form-textarea" id="editShippingAddress"></textarea>
+                        </div>
+                        <div class="form-group full-width">
+                            <label class="form-label">Billing Address</label>
+                            <textarea class="form-textarea" id="editBillingAddress"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeModal('customerModal')">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="modal-btn modal-btn-primary" onclick="saveCustomerInfo()">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Information Modal -->
+    <div id="paymentModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i class="fas fa-credit-card"></i> Edit Payment Information</h3>
+                <button class="modal-close" onclick="closeModal('paymentModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Payment Method</label>
+                            <select class="form-select" id="editPaymentMethod">
+                                <option value="credit">Credit Card</option>
+                                <option value="debit">Debit Card</option>
+                                <option value="paypal">PayPal</option>
+                                <option value="bank">Bank Transfer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Payment Status</label>
+                            <select class="form-select" id="editPaymentStatus">
+                                <option value="pending">Pending</option>
+                                <option value="paid" selected>Paid</option>
+                                <option value="failed">Failed</option>
+                                <option value="refunded">Refunded</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Transaction ID</label>
+                            <input type="text" class="form-input" id="editTransactionId">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Payment Date</label>
+                            <input type="datetime-local" class="form-input" id="editPaymentDate">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Amount Paid</label>
+                            <input type="number" class="form-input" id="editAmountPaid" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Card Ending</label>
+                            <input type="text" class="form-input" id="editCardEnding" maxlength="4">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeModal('paymentModal')">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="modal-btn modal-btn-primary" onclick="savePaymentInfo()">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Modal -->
+    <div id="productsModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i class="fas fa-box-open"></i> Edit Products</h3>
+                <button class="modal-close" onclick="closeModal('productsModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 20px;">
+                    <button class="modal-btn modal-btn-primary" style="padding: 10px 15px;" onclick="addProduct()">
+                        <i class="fas fa-plus"></i> Add Product
+                    </button>
+                </div>
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>SKU</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="editProductsTableBody">
+                        <!-- Products will be populated here -->
+                    </tbody>
+                </table>
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Subtotal:</span>
+                        <span id="editSubtotal">$2,677.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Shipping:</span>
+                        <span><input type="number" class="form-input" id="editShipping" value="24.99" step="0.01" style="width: 100px; display: inline;"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Tax:</span>
+                        <span><input type="number" class="form-input" id="editTax" value="145.01" step="0.01" style="width: 100px; display: inline;"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid #ddd; padding-top: 10px;">
+                        <span>Total:</span>
+                        <span id="editTotal">$1,847.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeModal('productsModal')">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="modal-btn modal-btn-primary" onclick="saveProductsInfo()">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Information Modal -->
+    <div id="additionalModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i class="fas fa-sticky-note"></i> Edit Additional Information</h3>
+                <button class="modal-close" onclick="closeModal('additionalModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="additionalForm">
+                    <div class="form-group">
+                        <label class="form-label">Customer Notes</label>
+                        <textarea class="form-textarea" id="editCustomerNotes"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Special Instructions</label>
+                        <textarea class="form-textarea" id="editSpecialInstructions"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Gift Message</label>
+                        <textarea class="form-textarea" id="editGiftMessage"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Internal Notes</label>
+                        <textarea class="form-textarea" id="editInternalNotes"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeModal('additionalModal')">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="modal-btn modal-btn-primary" onclick="saveAdditionalInfo()">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentOrder = null;
+        const token = localStorage.getItem('token');
+
+        // Get order ID from URL
+        function getOrderIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+
+        // Load order details
+        async function loadOrderDetails() {
+            const orderId = getOrderIdFromUrl();
+            if (!orderId) {
+                document.querySelectorAll('.info-value').forEach(el => { if (el) el.textContent = 'N/A'; });
+                const orderStatusEl = document.getElementById('orderStatus');
+                if (orderStatusEl) orderStatusEl.textContent = 'Error';
+                const paymentStatusEl = document.getElementById('paymentStatus');
+                if (paymentStatusEl) paymentStatusEl.textContent = 'Error';
+                alert('Order ID not found');
+                return;
+            }
+
+            // Show loading
+            document.querySelectorAll('.info-value').forEach(el => { if (el) el.textContent = 'Loading...'; });
+            const orderStatusEl = document.getElementById('orderStatus');
+            if (orderStatusEl) {
+                orderStatusEl.textContent = 'Pending';
+                orderStatusEl.className = 'status pending';
+            }
+            const paymentStatusEl = document.getElementById('paymentStatus');
+            if (paymentStatusEl) {
+                paymentStatusEl.textContent = 'Unpaid';
+                paymentStatusEl.className = 'status unpaid';
+            }
+            const customerAvatarEl = document.getElementById('customerAvatar');
+            if (customerAvatarEl) customerAvatarEl.textContent = '...';
+
+            let response, order = null;
+            try {
+                // Try MongoDB _id endpoint first
+                response = await fetch(`/api/orders/id/${orderId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (response.ok) {
+                    order = await response.json();
+                } else {
+                    // Try order number endpoint
+                    response = await fetch(`/api/orders/${orderId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    if (response.ok) {
+                        order = await response.json();
+                    } else {
+                        throw new Error(`Order not found (404)`);
+                    }
+                }
+                currentOrder = order;
+                populateOrderDetails(currentOrder);
+            } catch (error) {
+                console.error('Error loading order:', error);
+                document.querySelectorAll('.info-value').forEach(el => { if (el) el.textContent = 'Error loading data'; });
+                const orderStatusEl = document.getElementById('orderStatus');
+                if (orderStatusEl) orderStatusEl.textContent = 'Error';
+                const paymentStatusEl = document.getElementById('paymentStatus');
+                if (paymentStatusEl) paymentStatusEl.textContent = 'Error';
+                alert('Failed to load order details: ' + error.message);
+            }
+        }
+
+        // Populate order details
+        function populateOrderDetails(data) {
+            // Order Information
+            const orderIdEl = document.getElementById('orderId');
+            if (orderIdEl) orderIdEl.textContent = data.orderId || 'Loading...';
+
+            const customerEl = document.getElementById('customer');
+            if (customerEl) customerEl.textContent = data.customer?.name || 'Loading...';
+
+            const orderDateEl = document.getElementById('orderDate');
+            if (orderDateEl) orderDateEl.textContent = data.createdAt ? new Date(data.createdAt).toLocaleString() : 'Loading...';
+
+            const totalAmountEl = document.getElementById('totalAmount');
+            if (totalAmountEl) totalAmountEl.textContent = data.totalAmount ? `$${data.totalAmount.toFixed(2)}` : 'Loading...';
+
+            const orderStatusEl = document.getElementById('orderStatus');
+            if (orderStatusEl) {
+                orderStatusEl.textContent = (!data.status || data.status.toLowerCase() === 'loading') ? 'Pending' : data.status.charAt(0).toUpperCase() + data.status.slice(1);
+                orderStatusEl.className = `status ${(!data.status || data.status.toLowerCase() === 'loading') ? 'pending' : data.status}`;
+            }
+
+            const salesmanEl = document.getElementById('salesman');
+            if (salesmanEl) salesmanEl.textContent = data.salesman ? data.salesman.name : 'Not Assigned';
+
+            // Customer Information
+            const customerName = data.customer?.name || 'Loading...';
+
+            const customerAvatarEl = document.getElementById('customerAvatar');
+            if (customerAvatarEl) customerAvatarEl.textContent = customerName.split(' ').map(n => n[0]).join('') || '...';
+
+            const customerNameEl = document.getElementById('customerName');
+            if (customerNameEl) customerNameEl.textContent = customerName;
+
+            const customerEmailEl = document.getElementById('customerEmail');
+            if (customerEmailEl) customerEmailEl.textContent = data.customer?.email || 'Loading...';
+
+            const customerPhoneEl = document.getElementById('customerPhone');
+            if (customerPhoneEl) customerPhoneEl.textContent = data.customer?.phone || 'Loading...';
+
+            const shippingAddressEl = document.getElementById('shippingAddress');
+            if (shippingAddressEl) shippingAddressEl.innerHTML = data.customer?.shippingAddress || 'Loading...';
+
+            const billingAddressEl = document.getElementById('billingAddress');
+            if (billingAddressEl) billingAddressEl.innerHTML = data.customer?.billingAddress || 'Loading...';
+
+            // Payment Information
+            const paymentMethodEl = document.getElementById('paymentMethod');
+            if (paymentMethodEl) paymentMethodEl.textContent = data.payment?.method || 'Loading...';
+
+            const paymentStatusEl = document.getElementById('paymentStatus');
+            if (paymentStatusEl) {
+                paymentStatusEl.textContent = (!data.payment.status || data.payment.status.toLowerCase() === 'loading') ? 'Unpaid' : data.payment.status;
+                paymentStatusEl.className = `status ${(!data.payment?.status || data.payment.status.toLowerCase() === 'loading') ? 'unpaid' : data.payment.status}`;
+            }
+
+            const transactionIdEl = document.getElementById('transactionId');
+            if (transactionIdEl) transactionIdEl.textContent = data.payment?.transactionId || 'Loading...';
+
+            const paymentDateEl = document.getElementById('paymentDate');
+            if (paymentDateEl) paymentDateEl.textContent = data.payment?.date ? new Date(data.payment.date).toLocaleString() : 'Loading...';
+
+            const amountPaidEl = document.getElementById('amountPaid');
+            if (amountPaidEl) amountPaidEl.textContent = data.payment?.amountPaid ? `$${data.payment.amountPaid.toFixed(2)}` : 'Loading...';
+
+            const cardEndingEl = document.getElementById('cardEnding');
+            if (cardEndingEl) cardEndingEl.textContent = data.payment?.cardEnding ? `•••• ${data.payment.cardEnding}` : 'Loading...';
+
+            // Products
+            const productsTableBody = document.getElementById('productsTableBody');
+            if (productsTableBody) {
+                productsTableBody.innerHTML = '';
+                if (data.products && data.products.length > 0) {
+                    data.products.forEach(product => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><strong>${product.product || 'Loading...'}</strong></td>
+                            <td>${product.sku || 'N/A'}</td>
+                            <td>${product.price ? `$${product.price.toFixed(2)}` : 'Loading...'}</td>
+                            <td>${product.quantity || 'Loading...'}</td>
+                            <td>${(product.price && product.quantity) ? `$${(product.price * product.quantity).toFixed(2)}` : 'Loading...'}</td>
+                        `;
+                        productsTableBody.appendChild(row);
+                    });
+                } else {
+                    const row = document.createElement('tr');
+                    row.innerHTML = '<td colspan="5">Loading...</td>';
+                    productsTableBody.appendChild(row);
+                }
+            }
+
+            // Timeline
+            const timeline = document.getElementById('orderTimeline');
+            if (timeline) {
+                timeline.innerHTML = '';
+                if (data.timeline && data.timeline.length > 0) {
+                    data.timeline.forEach(item => {
+                        const timelineItem = document.createElement('div');
+                        timelineItem.className = 'timeline-item';
+                        timelineItem.innerHTML = `
+                            <div class="timeline-date">${new Date(item.date).toLocaleString()}</div>
+                            <div class="timeline-content">
+                                <strong>${item.action || 'Loading...'}</strong><br>
+                                ${item.description || 'Loading...'}
+                                ${item.updatedBy ? `<div class="timeline-updated-by">Updated by: ${item.updatedBy}</div>` : ''}
+                            </div>
+                        `;
+                        timeline.appendChild(timelineItem);
+                    });
+                } else {
+                    timeline.innerHTML = '<div class="timeline-item"><div class="timeline-content">Loading...</div></div>';
+                }
+            }
+
+            // Additional Information
+            const customerNotesEl = document.getElementById('customerNotes');
+            if (customerNotesEl) customerNotesEl.textContent = data.customerNotes || 'Loading...';
+
+            const specialInstructionsEl = document.getElementById('specialInstructions');
+            if (specialInstructionsEl) specialInstructionsEl.textContent = data.specialInstructions || 'Loading...';
+
+            const giftMessageEl = document.getElementById('giftMessage');
+            if (giftMessageEl) giftMessageEl.textContent = data.giftMessage || 'Loading...';
+
+            const internalNotesEl = document.getElementById('internalNotes');
+            if (internalNotesEl) internalNotesEl.textContent = data.internalNotes || 'Loading...';
+
+            // Image
+            const imagePreview = document.getElementById('imagePreview');
+            if (imagePreview) {
+                if (data.image) {
+                    imagePreview.innerHTML = `<img src="${data.image}" alt="Order Image">`;
+                } else {
+                    imagePreview.innerHTML = 'Loading...';
+                }
+            }
+        }
+
+        // Modal functions
+        async function openModal(modalId) {
+            if (!currentOrder) return;
+            document.getElementById(modalId).classList.add('active');
+            await populateModal(modalId);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        async function populateModal(modalId) {
+            if (modalId === 'orderModal') {
+                document.getElementById('editOrderId').value = currentOrder.orderId || '';
+                document.getElementById('editCustomer').value = currentOrder.customer?.name || '';
+                document.getElementById('editOrderDate').value = currentOrder.createdAt ? new Date(currentOrder.createdAt).toISOString().slice(0, 16) : '';
+                document.getElementById('editTotalAmount').value = currentOrder.totalAmount || '';
+                document.getElementById('editStatus').value = currentOrder.status || '';
+
+                // Fetch and populate salesmen
+                const salesmanSelect = document.getElementById('editSalesman');
+                salesmanSelect.innerHTML = '<option value="">Select Salesman</option>';
+                try {
+                    const response = await fetch('/api/salesmen', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.ok) {
+                        const salesmen = await response.json();
+                        salesmen.forEach(salesman => {
+                            const option = document.createElement('option');
+                            option.value = salesman._id;
+                            option.textContent = salesman.name;
+                            salesmanSelect.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching salesmen:', error);
+                }
+                salesmanSelect.value = currentOrder.salesman ? currentOrder.salesman._id : '';
+            } else if (modalId === 'customerModal') {
+                document.getElementById('editCustomerName').value = currentOrder.customer?.name || '';
+                document.getElementById('editCustomerEmail').value = currentOrder.customer?.email || '';
+                document.getElementById('editCustomerPhone').value = currentOrder.customer?.phone || '';
+                document.getElementById('editCustomerStatus').value = currentOrder.customer?.status || 'regular';
+                document.getElementById('editShippingAddress').value = currentOrder.customer?.shippingAddress || '';
+                document.getElementById('editBillingAddress').value = currentOrder.customer?.billingAddress || '';
+            } else if (modalId === 'paymentModal') {
+                document.getElementById('editPaymentMethod').value = currentOrder.payment?.method || '';
+                document.getElementById('editPaymentStatus').value = currentOrder.payment?.status || 'unpaid';
+                document.getElementById('editTransactionId').value = currentOrder.payment?.transactionId || '';
+                document.getElementById('editPaymentDate').value = currentOrder.payment?.date ? new Date(currentOrder.payment.date).toISOString().slice(0, 16) : '';
+                document.getElementById('editAmountPaid').value = currentOrder.payment?.amountPaid || '';
+                document.getElementById('editCardEnding').value = currentOrder.payment?.cardEnding || '';
+            } else if (modalId === 'productsModal') {
+                const editProductsTableBody = document.getElementById('editProductsTableBody');
+                editProductsTableBody.innerHTML = '';
+                currentOrder.products.forEach((product, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><input type="text" class="form-input" value="${product.product}" style="width: 200px;"></td>
+                        <td><input type="text" class="form-input" value="${product.sku || ''}" style="width: 100px;"></td>
+                        <td><input type="number" class="form-input" value="${product.price}" step="0.01" style="width: 100px;"></td>
+                        <td><input type="number" class="form-input" value="${product.quantity}" min="1" style="width: 70px;"></td>
+                        <td>
+                            <button class="modal-btn" style="padding: 5px 10px; background: var(--danger);" onclick="removeProduct(${index})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    editProductsTableBody.appendChild(row);
+                });
+                updateEditTotal();
+            } else if (modalId === 'additionalModal') {
+                document.getElementById('editCustomerNotes').value = currentOrder.customerNotes || '';
+                document.getElementById('editSpecialInstructions').value = currentOrder.specialInstructions || '';
+                document.getElementById('editGiftMessage').value = currentOrder.giftMessage || '';
+                document.getElementById('editInternalNotes').value = currentOrder.internalNotes || '';
+            }
+        }
+
+        function updateEditTotal() {
+            // Calculate total from edit products
+            let subtotal = 0;
+            const rows = document.querySelectorAll('#editProductsTableBody tr');
+            rows.forEach(row => {
+                const price = parseFloat(row.cells[2].querySelector('input').value) || 0;
+                const quantity = parseInt(row.cells[3].querySelector('input').value) || 0;
+                subtotal += price * quantity;
+            });
+            document.getElementById('editSubtotal').textContent = `$${subtotal.toFixed(2)}`;
+            const shipping = parseFloat(document.getElementById('editShipping').value) || 0;
+            const tax = parseFloat(document.getElementById('editTax').value) || 0;
+            const total = subtotal + shipping + tax;
+            document.getElementById('editTotal').textContent = `$${total.toFixed(2)}`;
+        }
+
+        function addProduct() {
+            const tbody = document.getElementById('editProductsTableBody');
+            const index = tbody.children.length;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><input type="text" class="form-input" value="" style="width: 200px;"></td>
+                <td><input type="text" class="form-input" value="" style="width: 100px;"></td>
+                <td><input type="number" class="form-input" value="0" step="0.01" style="width: 100px;"></td>
+                <td><input type="number" class="form-input" value="1" min="1" style="width: 70px;"></td>
+                <td>
+                    <button class="modal-btn" style="padding: 5px 10px; background: var(--danger);" onclick="removeProduct(${index})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            updateProductIndices();
+            updateEditTotal();
+        }
+
+        function removeProduct(index) {
+            const tbody = document.getElementById('editProductsTableBody');
+            const rows = Array.from(tbody.children);
+            if (index >= 0 && index < rows.length) {
+                rows[index].remove();
+                updateProductIndices();
+                updateEditTotal();
+            }
+        }
+
+        function updateProductIndices() {
+            const rows = document.querySelectorAll('#editProductsTableBody tr');
+            rows.forEach((row, index) => {
+                const button = row.querySelector('button[onclick*="removeProduct"]');
+                if (button) {
+                    button.setAttribute('onclick', `removeProduct(${index})`);
+                }
+            });
+        }
+
+        // Save functions
+        async function saveOrderInfo() {
+            const data = {
+                customer: { name: document.getElementById('editCustomer').value },
+                status: document.getElementById('editStatus').value,
+                totalAmount: parseFloat(document.getElementById('editTotalAmount').value),
+                salesman: document.getElementById('editSalesman').value
+            };
+            await updateOrder(data);
+            closeModal('orderModal');
+        }
+
+        async function saveCustomerInfo() {
+            const data = {
+                customer: {
+                    name: document.getElementById('editCustomerName').value,
+                    email: document.getElementById('editCustomerEmail').value,
+                    phone: document.getElementById('editCustomerPhone').value,
+                    status: document.getElementById('editCustomerStatus').value,
+                    shippingAddress: document.getElementById('editShippingAddress').value,
+                    billingAddress: document.getElementById('editBillingAddress').value
+                }
+            };
+            await updateOrder(data);
+            closeModal('customerModal');
+        }
+
+        async function savePaymentInfo() {
+            const data = {
+                payment: {
+                    method: document.getElementById('editPaymentMethod').value,
+                    status: document.getElementById('editPaymentStatus').value,
+                    transactionId: document.getElementById('editTransactionId').value,
+                    date: document.getElementById('editPaymentDate').value ? new Date(document.getElementById('editPaymentDate').value) : null,
+                    amountPaid: parseFloat(document.getElementById('editAmountPaid').value),
+                    cardEnding: document.getElementById('editCardEnding').value
+                }
+            };
+            await updateOrder(data);
+            closeModal('paymentModal');
+        }
+
+        async function saveProductsInfo() {
+            const products = [];
+            const rows = document.querySelectorAll('#editProductsTableBody tr');
+            rows.forEach(row => {
+                products.push({
+                    product: row.cells[0].querySelector('input').value,
+                    sku: row.cells[1].querySelector('input').value || '',
+                    price: parseFloat(row.cells[2].querySelector('input').value),
+                    quantity: parseInt(row.cells[3].querySelector('input').value)
+                });
+            });
+            const data = { products };
+            await updateOrder(data);
+            closeModal('productsModal');
+        }
+
+        async function saveAdditionalInfo() {
+            const data = {
+                customerNotes: document.getElementById('editCustomerNotes').value,
+                specialInstructions: document.getElementById('editSpecialInstructions').value,
+                giftMessage: document.getElementById('editGiftMessage').value,
+                internalNotes: document.getElementById('editInternalNotes').value
+            };
+            await updateOrder(data);
+            closeModal('additionalModal');
+        }
+
+        async function updateOrder(updateData) {
+            try {
+                const response = await fetch(`/api/orders/${currentOrder._id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                if (!response.ok) throw new Error('Failed to update order');
+                const updatedOrder = await response.json();
+                currentOrder = updatedOrder;
+                populateOrderDetails(currentOrder);
+                alert('Order updated successfully!');
+            } catch (error) {
+                console.error('Error updating order:', error);
+                alert('Failed to update order');
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modals = document.querySelectorAll('.modal-overlay');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        }
+
+        // Load order details on page load
+        window.addEventListener('DOMContentLoaded', loadOrderDetails);
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElectroShop - Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Premium Styles - Same as orders page */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        :root { --primary: #25D366; --primary-dark: #128C7E; --secondary: #5452EE; --dark: #2D2D3A; --light: #F8F9FA; --gray: #6C757D; --success: #28A745; --warning: #FFC107; --danger: #DC3545; }
+        body { background-color: #f0f2f5; color: #333; line-height: 1.6; }
+        .container { display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: var(--dark); color: white; padding: 20px 0; }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h2 { color: white; display: flex; align-items: center; gap: 10px; }
+        .sidebar-header h2 i { color: var(--primary); }
+        .sidebar-menu { list-style: none; padding: 20px 0; }
+        .sidebar-menu li { padding: 10px 20px; margin: 5px 0; border-left: 4px solid transparent; }
+        .sidebar-menu li:hover, .sidebar-menu li.active { background: rgba(255,255,255,0.1); border-left: 4px solid var(--primary); }
+        .sidebar-menu a { color: white; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0; }
+        .header h1 { color: var(--dark); }
+        
+        /* Profile Card Styles */
+        .profile-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 70vh;
+        }
+        .profile-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 40px;
+            border: 3px solid rgba(255,255,255,0.3);
+        }
+        .profile-header h2 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .profile-header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .profile-details {
+            padding: 30px;
+        }
+        .detail-item {
+            display: flex;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .detail-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .detail-icon {
+            width: 40px;
+            height: 40px;
+            background: #f0f2f5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: var(--primary-dark);
+            font-size: 18px;
+        }
+        .detail-content h3 {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .detail-content p {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        .logout-btn-container {
+            padding: 0 30px 30px;
+            text-align: center;
+        }
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+        .logout-btn:hover {
+            background: #a71d2a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220,53,69,0.3);
+        }
+        
+        /* Premium Modal Styles for Logout Confirmation */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(45,45,58,0.45);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 36px 40px 28px 40px;
+            border-radius: 18px;
+            min-width: 400px;
+            box-shadow: 0 8px 32px rgba(40,167,69,0.18), 0 1.5px 8px rgba(45,45,58,0.12);
+            position: relative;
+            transition: box-shadow 0.2s;
+        }
+        .modal-content h3 {
+            margin-bottom: 18px;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(18,140,126,0.12);
+        }
+        .confirmation-dialog {
+            background: #fff;
+            color: #222;
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 12px rgba(40,167,69,0.08);
+            text-align: center;
+        }
+        .confirmation-dialog p {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            color: var(--dark);
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+        .confirm-btn {
+            background: var(--danger);
+            color: white;
+        }
+        .confirm-btn:hover {
+            background: #a71d2a;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(220,53,69,0.3);
+        }
+        .cancel-btn {
+            background: #fff;
+            color: var(--primary-dark);
+            border: 1.5px solid var(--primary-dark);
+            font-weight: 600;
+            box-shadow: 0 1px 4px rgba(18,140,126,0.08);
+        }
+        .cancel-btn:hover {
+            background: var(--primary-dark);
+            color: #fff;
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                padding: 10px 0;
+            }
+            .sidebar-menu {
+                display: flex;
+                overflow-x: auto;
+                padding: 10px 0;
+            }
+            .sidebar-menu li {
+                padding: 10px 15px;
+                white-space: nowrap;
+                border-left: none;
+                border-bottom: 4px solid transparent;
+            }
+            .sidebar-menu li:hover, .sidebar-menu li.active {
+                border-left: none;
+                border-bottom: 4px solid var(--primary);
+            }
+            .modal-content {
+                min-width: 90vw;
+                padding: 18px 8vw;
+            }
+            .confirmation-dialog {
+                padding: 12px 4vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-bolt"></i> ElectroShop</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="active"><a href="/salesman/profile"><i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="/salesman/orders"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+                <li><a href="/salesman/assigned-orders"><i class="fas fa-clipboard-list"></i> Assigned Orders</a></li>
+            </ul>
+        </aside>
+        <main class="main-content">
+            <div class="header">
+                <h1>Profile</h1>
+            </div>
+            
+            <div class="profile-container">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h2 id="salesmanName">Michael Johnson</h2>
+                        <p id="salesmanRegion">West Region</p>
+                    </div>
+                    
+                    <div class="profile-details">
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="detail-content">
+                                <h3>Email</h3>
+                                <p id="salesmanEmail">michael.johnson@electroshop.com</p>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="detail-content">
+                                <h3>Phone</h3>
+                                <p id="salesmanPhone">+1 (555) 987-6543</p>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="detail-content">
+                                <h3>Joined Date</h3>
+                                <p id="salesmanJoined">March 22, 2023</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="logout-btn-container">
+                        <button class="logout-btn" onclick="showLogoutConfirmation()">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Logout Confirmation Modal -->
+    <div class="modal" id="logoutModal">
+        <div class="modal-content">
+            <h3>Confirm Logout</h3>
+            <div class="confirmation-dialog">
+                <p>Are you sure you want to logout from your account?</p>
+                <div class="modal-actions">
+                    <button type="button" class="action-btn confirm-btn" onclick="confirmLogout()">Yes, Logout</button>
+                    <button type="button" class="action-btn cancel-btn" onclick="closeLogoutModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Function to fetch and display salesman data
+        async function loadSalesmanData() {
+            try {
+                const token = localStorage.getItem('token');
+                const role = localStorage.getItem('role');
+                if (!token || role !== 'salesman') {
+                    window.location.href = '../Login.html';
+                    return;
+                }
+
+                const response = await fetch('/api/salesmen/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch profile data');
+                }
+
+                const salesmanData = await response.json();
+                
+                // Update the UI with salesman data
+                document.getElementById('salesmanName').textContent = salesmanData.name;
+                document.getElementById('salesmanEmail').textContent = salesmanData.email;
+                document.getElementById('salesmanPhone').textContent = salesmanData.phone;
+                document.getElementById('salesmanRegion').textContent = salesmanData.region;
+                document.getElementById('salesmanJoined').textContent = new Date(salesmanData.joinedAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+            } catch (error) {
+                console.error('Error loading salesman data:', error);
+                alert('Failed to load profile data. Please try again.');
+            }
+        }
+        
+        // Show logout confirmation modal
+        function showLogoutConfirmation() {
+            document.getElementById('logoutModal').style.display = 'flex';
+        }
+        
+        // Close logout confirmation modal
+        function closeLogoutModal() {
+            document.getElementById('logoutModal').style.display = 'none';
+        }
+        
+        // Confirm logout function
+        async function confirmLogout() {
+            try {
+                const response = await fetch('/api/logout', {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    window.location.href = '../Login.html';
+                } else {
+                    alert('Logout failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error during logout:', error);
+                alert('An error occurred during logout. Please try again.');
+            }
+        }
+        
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('logoutModal');
+            if (event.target === modal) {
+                closeLogoutModal();
+            }
+        }
+        
+        // Load data when page is ready
+        document.addEventListener('DOMContentLoaded', loadSalesmanData);
+    </script>
+</body>
+</html>

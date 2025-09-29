@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElectroShop - Orders</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Premium Modal Styles */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        :root { --primary: #25D366; --primary-dark: #128C7E; --secondary: #5452EE; --dark: #2D2D3A; --light: #F8F9FA; --gray: #6C757D; --success: #28A745; --warning: #FFC107; --danger: #DC3545; }
+        body { background-color: #f0f2f5; color: #333; line-height: 1.6; }
+        .container { display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: var(--dark); color: white; padding: 20px 0; }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h2 { color: white; display: flex; align-items: center; gap: 10px; }
+        .sidebar-header h2 i { color: var(--primary); }
+        .sidebar-menu { list-style: none; padding: 20px 0; }
+        .sidebar-menu li { padding: 10px 20px; margin: 5px 0; border-left: 4px solid transparent; }
+        .sidebar-menu li:hover, .sidebar-menu li.active { background: rgba(255,255,255,0.1); border-left: 4px solid var(--primary); }
+        .sidebar-menu a { color: white; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0; }
+        .header h1 { color: var(--dark); }
+        .orders-table { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 3px 15px rgba(0,0,0,0.08); margin-top: 20px; }
+        .table-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0e0e0; }
+        .table-header h2 { color: var(--dark); }
+        .search-box { display: flex; align-items: center; background: #f0f2f5; padding: 8px 15px; border-radius: 20px; }
+        .search-box input { border: none; background: transparent; outline: none; margin-left: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px 20px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        th { background: #f8f9fa; font-weight: 600; color: var(--gray); }
+        tr:hover { background: #f8f9fa; }
+        .status { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .pending { background: rgba(255,193,7,0.2); color: var(--warning); }
+        .completed { background: rgba(40,167,69,0.2); color: var(--success); }
+        .processing { background: rgba(84,82,238,0.2); color: var(--secondary); }
+        .product-packaged { background: rgba(255,87,34,0.15); color: #ff5722; font-weight: 600; }
+        .salesman-assigned { background: rgba(255,193,7,0.15); color: #ffc107; font-weight: 600; }
+        .shipment { background: rgba(76,175,80,0.15); color: #4caf50; }
+        .picked-up { background: rgba(37, 211, 102, 0.2); color: var(--primary); }
+        .action-btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; transition: all 0.3s ease; }
+        .pickup-btn { background: var(--primary); color: white; }
+        .pickup-btn:hover { background: var(--primary-dark); }
+        .drop-btn { background: var(--danger); color: white; }
+        .drop-btn:hover { background: #a71d2a; }
+        /* Premium Modal Styles */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(45,45,58,0.45); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 36px 40px 28px 40px;
+            border-radius: 18px;
+            min-width: 400px;
+            box-shadow: 0 8px 32px rgba(40,167,69,0.18), 0 1.5px 8px rgba(45,45,58,0.12);
+            position: relative;
+            transition: box-shadow 0.2s;
+        }
+        .modal-content h3 {
+            margin-bottom: 18px;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(18,140,126,0.12);
+        }
+        #orderDetailsBody {
+            background: #fff;
+            color: #222;
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 12px rgba(40,167,69,0.08);
+        }
+        #orderDetailsBody ul {
+            margin: 12px 0 0 18px;
+        }
+        #orderDetailsBody li {
+            margin-bottom: 8px;
+            font-size: 1.08rem;
+            font-weight: 500;
+            color: var(--primary-dark);
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .action-btn.view-btn {
+            background: #fff;
+            color: var(--primary-dark);
+            border: 1.5px solid var(--primary-dark);
+            font-weight: 600;
+            box-shadow: 0 1px 4px rgba(18,140,126,0.08);
+        }
+        .action-btn.view-btn:hover {
+            background: var(--primary-dark);
+            color: #fff;
+        }
+        /* Confirmation Dialog Styles */
+        .confirmation-dialog {
+            background: #fff;
+            color: #222;
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 12px rgba(40,167,69,0.08);
+            text-align: center;
+        }
+        .confirmation-dialog p {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+        /* Responsive modal */
+        @media (max-width: 600px) {
+            .modal-content {
+                min-width: 90vw;
+                padding: 18px 8vw;
+            }
+            #orderDetailsBody {
+                padding: 12px 4vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-bolt"></i> ElectroShop</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="active"><a href="/salesman/orders"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+                <li><a href="/salesman/profile"><i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="/salesman/assigned-orders"><i class="fas fa-clipboard-list"></i> Assigned Orders</a></li>
+            </ul>
+        </aside>
+        <main class="main-content">
+            <div class="header">
+                <h1>Orders</h1>
+            </div>
+            <div class="orders-table">
+                <div class="table-header">
+                    <h2>Order List</h2>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchOrder" placeholder="Search orders...">
+                    </div>
+                </div>
+                <table id="ordersTable">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Total</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Orders will be rendered here -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- Modal for Order Details -->
+            <div class="modal" id="orderDetailsModal">
+                <div class="modal-content" style="min-width:400px;">
+                    <h3>Order Details</h3>
+                    <div id="orderDetailsBody"></div>
+                    <div class="modal-actions">
+                        <button type="button" class="action-btn view-btn" onclick="closeOrderDetailsModal()">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal for Pickup Confirmation -->
+            <div class="modal" id="pickupConfirmationModal">
+                <div class="modal-content">
+                    <h3>Confirm Pickup</h3>
+                    <p>Are you sure you want to pick up this order?</p>
+                    <input type="hidden" id="pickupOrderId">
+                    <div class="modal-actions">
+                        <button type="button" class="action-btn pickup-btn" onclick="confirmPickup()">Yes, Pick Up</button>
+                        <button type="button" class="action-btn view-btn" onclick="closePickupConfirmationModal()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal for Drop Confirmation -->
+            <div class="modal" id="dropConfirmationModal">
+                <div class="modal-content">
+                    <h3>Confirm Drop</h3>
+                    <p>Are you sure you want to drop this order?</p>
+                    <input type="hidden" id="dropOrderId">
+                    <div class="modal-actions">
+                        <button type="button" class="action-btn drop-btn" onclick="confirmDrop()">Yes, Drop</button>
+                        <button type="button" class="action-btn view-btn" onclick="closeDropConfirmationModal()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Modal for Drop Confirmation -->
+            <div class="modal" id="dropConfirmationModal">
+                <div class="modal-content">
+                    <h3>Confirm Drop</h3>
+                    <div class="confirmation-dialog">
+                        <p>Are you sure you want to undo the pickup for this order?</p>
+                        <div class="modal-actions">
+                            <button type="button" class="action-btn drop-btn" onclick="confirmDrop()">Yes, Drop</button>
+                            <button type="button" class="action-btn view-btn" onclick="closeDropConfirmationModal()">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        // Modal logic
+        let currentOrderId = null;
+        let ordersData = [];
+        
+        async function loadOrders() {
+            try {
+                const token = localStorage.getItem('token');
+                console.log(`INSODE HTML ${token}`)
+                const role = localStorage.getItem('role');
+                if (!token || role !== 'salesman') {
+                    window.location.href = '../Login.html';
+                    return;
+                }
+
+                const response = await fetch('/api/salesmen/all-orders', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch orders');
+                }
+
+                ordersData = await response.json();
+                renderOrdersTable(ordersData);
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                alert('Failed to load orders. Please try again.');
+            }
+        }
+
+        function renderOrdersTable(orders) {
+            const tbody = document.querySelector('#ordersTable tbody');
+            tbody.innerHTML = '';
+            orders.forEach(order => {
+                const tr = document.createElement('tr');
+                tr.dataset.id = order._id;
+                tr.style.cursor = 'pointer';
+                tr.onclick = () => openOrderDetailsModal(order._id);
+                
+                const statusClass = order.status.replace(/ /g, '-').toLowerCase();
+                const buttonClass = order.pickedUp ? 'drop-btn' : 'pickup-btn';
+                const buttonText = order.pickedUp ? 'Drop' : 'Pickup';
+                const buttonIcon = order.pickedUp ? 'fa-undo' : 'fa-truck';
+                
+                tr.innerHTML = `
+                    <td>${order.orderId}</td>
+                    <td>${order.customer.name || 'N/A'}</td>
+                    <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td><span class="status ${statusClass}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></td>
+                    <td>$${order.totalAmount}</td>
+                    <td>
+                        <button class="action-btn ${buttonClass}" onclick="event.stopPropagation();togglePickup(this, '${order._id}')">
+                            <i class="fas ${buttonIcon}"></i> ${buttonText}
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function openOrderDetailsModal(orderId) {
+            const order = ordersData.find(o => o._id === orderId);
+            if (!order) return;
+            
+            let productsHtml = '';
+            if (order.products && order.products.length > 0) {
+                productsHtml = `<ul>` + order.products.map(p => {
+                    let name = p.product || 'Product';
+                    let price = p.price !== undefined ? ` ($${p.price})` : '';
+                    return `<li><strong>${name}</strong>${price} &times; <strong>${p.quantity}</strong></li>`;
+                }).join('') + `</ul>`;
+            } else if (order.totalAmount > 0) {
+                productsHtml = '<em><span style="color:red">Warning: Products missing but total price is set. Please check order data.</span></em>';
+            } else {
+                productsHtml = '<em>No products found for this order.</em>';
+            }
+            
+            let salesmanHtml = '';
+            if (order.salesman && order.salesman.name) {
+                salesmanHtml = `<strong>Salesman:</strong> ${order.salesman.name}<br>`;
+            }
+
+            let imageMessage = '';
+            let imageHtml = '';
+            if (order.image) {
+                imageMessage = `<strong>Note:</strong> This order was submitted with an image.<br>`;
+                imageHtml = `<a href="/images/${order.image}" target="_blank" style="color: var(--primary); text-decoration: underline;">Click to view image in new tab</a><br>`;
+            }
+
+            const pickupStatus = order.pickedUp ?
+                '<span class="status picked-up">Picked Up</span>' :
+                '<span class="status pending">Not Picked Up</span>';
+
+            let pickedUpByHtml = '';
+
+            document.getElementById('orderDetailsBody').innerHTML = `
+                <strong>Order ID:</strong> ${order.orderId}<br>
+                <strong>Customer:</strong> ${order.customer.name || 'N/A'}<br>
+                <strong>Date:</strong> ${new Date(order.createdAt).toLocaleString()}<br>
+                <strong>Status:</strong> <span class="status ${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span><br>
+                <strong>Pickup Status:</strong> ${pickupStatus}<br>
+                <strong>Total:</strong> $${order.totalAmount}<br>
+                ${salesmanHtml}
+                ${imageMessage}
+                ${imageHtml}
+                <strong>Products:</strong> ${productsHtml}
+            `;
+            document.getElementById('orderDetailsModal').style.display = 'flex';
+        }
+        
+        function closeOrderDetailsModal() {
+            document.getElementById('orderDetailsModal').style.display = 'none';
+        }
+
+        function togglePickup(button, orderId) {
+            currentOrderId = orderId;
+            const order = ordersData.find(o => o._id === orderId);
+            if (order.pickedUp) {
+                document.getElementById('dropOrderId').value = orderId;
+                document.getElementById('dropConfirmationModal').style.display = 'flex';
+            } else {
+                document.getElementById('pickupOrderId').value = orderId;
+                document.getElementById('pickupConfirmationModal').style.display = 'flex';
+            }
+        }
+
+        async function confirmPickup() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/salesmen/pickup/${currentOrderId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to pickup order');
+                }
+                closePickupConfirmationModal();
+                loadOrders(); // Reload orders to update the table
+            } catch (error) {
+                console.error('Error picking up order:', error);
+                alert('Failed to pickup order. Please try again.');
+            }
+        }
+
+        async function confirmDrop() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/salesmen/drop/${currentOrderId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to drop order');
+                }
+                closeDropConfirmationModal();
+                loadOrders(); // Reload orders to update the table
+            } catch (error) {
+                console.error('Error dropping order:', error);
+                alert('Failed to drop order. Please try again.');
+            }
+        }
+
+        function closePickupConfirmationModal() {
+            document.getElementById('pickupConfirmationModal').style.display = 'none';
+        }
+
+        function closeDropConfirmationModal() {
+            document.getElementById('dropConfirmationModal').style.display = 'none';
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOrders();
+        });
+        
+        // Search logic
+        document.getElementById('searchOrder').addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#ordersTable tbody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
+
+        // Pickup and Drop functions
+        async function togglePickup(button, orderId) {
+            const order = ordersData.find(o => o._id === orderId);
+            if (!order) return;
+
+            if (order.pickedUp) {
+                // Show drop confirmation
+                document.getElementById('dropConfirmationModal').style.display = 'flex';
+                document.getElementById('dropConfirmationModal').dataset.orderId = orderId;
+            } else {
+                // Show pickup confirmation
+                document.getElementById('pickupConfirmationModal').style.display = 'flex';
+                document.getElementById('pickupConfirmationModal').dataset.orderId = orderId;
+            }
+        }
+
+        async function confirmPickup() {
+            const orderId = document.getElementById('pickupConfirmationModal').dataset.orderId;
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch(`/api/salesmen/pickup/${orderId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    closePickupConfirmationModal();
+                    loadOrders(); // Reload orders
+                } else {
+                    const errorData = await response.json();
+                    alert(`Failed to pickup order: ${errorData.msg || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error picking up order:', error);
+                alert('An error occurred while picking up the order');
+            }
+        }
+
+        async function confirmDrop() {
+            const orderId = document.getElementById('dropConfirmationModal').dataset.orderId;
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch(`/api/salesmen/drop/${orderId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    closeDropConfirmationModal();
+                    loadOrders(); // Reload orders
+                } else {
+                    const errorData = await response.json();
+                    alert(`Failed to drop order: ${errorData.msg || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error dropping order:', error);
+                alert('An error occurred while dropping the order');
+            }
+        }
+
+        function closePickupConfirmationModal() {
+            document.getElementById('pickupConfirmationModal').style.display = 'none';
+        }
+
+        function closeDropConfirmationModal() {
+            document.getElementById('dropConfirmationModal').style.display = 'none';
+        }
+
+
+    </script>
+</body>
+</html>

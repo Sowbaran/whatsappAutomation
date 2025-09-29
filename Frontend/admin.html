@@ -310,26 +310,35 @@
         }
         
         .modal-content {
-            background: white;
-            border-radius: 10px;
-            width: 400px;
-            padding: 20px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 18px;
+            width: 420px;
+            padding: 0;
+            box-shadow: 0 8px 32px rgba(37, 211, 102, 0.18), 0 1.5px 8px rgba(84, 82, 238, 0.10);
+            overflow: hidden;
+            border: 2.5px solid var(--primary-dark);
         }
         
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e0e0e0;
+            background: rgba(255,255,255,0.12);
+            padding: 24px 28px 12px 28px;
+            border-bottom: 1.5px solid rgba(255,255,255,0.18);
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 600;
         }
         
         .close {
-            font-size: 24px;
+            font-size: 28px;
             cursor: pointer;
-            color: var(--gray);
+            color: #fff;
+            transition: color 0.2s;
+        }
+        .close:hover {
+            color: var(--danger);
         }
         
         .form-group {
@@ -366,21 +375,27 @@
         }
         
         .btn-primary {
-            background: var(--primary);
-            color: white;
+            background: linear-gradient(90deg, var(--primary) 60%, var(--secondary) 100%);
+            color: #fff;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(37,211,102,0.10);
         }
         
         .btn-primary:hover {
             background: var(--primary-dark);
+            filter: brightness(1.08);
         }
         
         .btn-secondary {
-            background: #f0f2f5;
+            background: rgba(255,255,255,0.85);
             color: var(--dark);
+            font-weight: 500;
         }
         
         .btn-secondary:hover {
             background: #e0e0e0;
+            filter: brightness(0.98);
         }
         
         /* Responsive */
@@ -429,13 +444,27 @@
             <div class="sidebar-header">
                 <h2><i class="fas fa-bolt"></i> ElectroShop</h2>
             </div>
+    <!-- Order Details Modal -->
+    <div class="modal" id="orderDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#f8f9fa;color:#222;">
+                <span><i class="fas fa-receipt" style="color:var(--primary);margin-right:8px;"></i> Order Details</span>
+                <span class="close" onclick="closeOrderDetailsModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="orderDetailsBody" style="color:#222;padding:24px 28px 0 28px;font-size:1.08rem;"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeOrderDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
             <ul class="sidebar-menu">
-                <li class="active"><a href="#"><i class="fas fa-home"></i> Dashboard</a></li>
-                <li><a href="orders.html"><i class="fas fa-shopping-cart"></i> Orders</a></li>
-                <li><a href="products.html"><i class="fas fa-box"></i> Products</a></li>
-                <li><a href="customers.html"><i class="fas fa-users"></i> Customers</a></li>
-                
-                
+                <li class="active"><a href="#" id="dashboardLink"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="#" id="ordersLink"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+                <li><a href="#" id="salesProgressLink"><i class="fas fa-chart-line"></i> Sales Progress</a></li>
+                <li><a href="#" id="productsLink"><i class="fas fa-box"></i> Products</a></li>
+                <li><a href="#" id="customersLink"><i class="fas fa-users"></i> Customers</a></li>
+
+
             </ul>
         </div>
 
@@ -462,7 +491,7 @@
                         <i class="fas fa-shopping-cart"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>152</h3>
+                        <h3 id="ordersCount">0</h3>
                         <p>Total Orders</p>
                     </div>
                 </div>
@@ -471,7 +500,7 @@
                         <i class="fas fa-dollar-sign"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>$12,548</h3>
+                        <h3 id="revenueCount">$0</h3>
                         <p>Total Revenue</p>
                     </div>
                 </div>
@@ -480,7 +509,7 @@
                         <i class="fas fa-users"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>245</h3>
+                        <h3 id="customersCount">0</h3>
                         <p>Total Customers</p>
                     </div>
                 </div>
@@ -489,7 +518,7 @@
                         <i class="fas fa-box"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>56</h3>
+                        <h3 id="productsCount">0</h3>
                         <p>Total Products</p>
                     </div>
                 </div>
@@ -586,49 +615,138 @@
     <!-- Assign Modal -->
     <div class="modal" id="assignModal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Assign Order to Salesman</h3>
+            <div class="modal-header" style="background:#f8f9fa;color:#222;">
+                <span><i class="fas fa-user-tie" style="color:var(--primary);margin-right:8px;"></i> Salesman Assignment</span>
                 <span class="close" onclick="closeAssignModal()">&times;</span>
             </div>
             <div class="modal-body">
-                <p>Assigning order: <strong id="orderId"></strong></p>
+                <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px;">
+                    <div style="background:#e9f7ef;border-radius:50%;width:48px;height:48px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fas fa-user-tie" style="font-size:2rem;color:var(--primary);"></i>
+                    </div>
+                    <div>
+                        <div style="color:#222;font-size:1.1rem;font-weight:500;">Assign Order to Salesman</div>
+                        <div style="color:#555;font-size:0.95rem;">Order: <strong id="orderId"></strong></div>
+                    </div>
+                </div>
                 <div class="form-group">
-                    <label for="salesman">Select Salesman</label>
-                    <select id="salesman">
+                    <label for="salesman" style="color:#222;">Select Salesman</label>
+                    <select id="salesman" style="background:#f8f9fa;color:#222;">
                         <option value="">-- Select Salesman --</option>
-                        <option value="John Doe">John Doe</option>
-                        <option value="Sarah Miller">Sarah Miller</option>
-                        <option value="David Wilson">David Wilson</option>
-                        <option value="Lisa Anderson">Lisa Anderson</option>
-                        <option value="Robert Taylor">Robert Taylor</option>
                     </select>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeAssignModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="assignSalesman()">Assign</button>
+                <button class="btn btn-primary" onclick="showConfirmAssignModal()">Assign</button>
+            </div>
+        </div>
+    </div>
+    <!-- Confirm Assign Modal -->
+    <div class="modal" id="confirmAssignModal">
+        <div class="modal-content" style="background:linear-gradient(135deg,#fff 0%,var(--primary) 100%);border:2.5px solid var(--primary-dark);">
+            <div class="modal-header" style="background:#f8f9fa;color:#222;">
+                <span><i class="fas fa-check-circle" style="color:var(--primary);margin-right:8px;"></i> Confirm Salesman Assignment</span>
+                <span class="close" onclick="closeConfirmAssignModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="confirmAssignBody" style="color:#222;padding:24px 28px 0 28px;font-size:1.08rem;"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeConfirmAssignModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="assignSalesman(true)">Confirm</button>
             </div>
         </div>
     </div>
 
     <script>
+        function openOrderDetailsModal(orderId) {
+            fetch('/api/orders')
+                .then(res => res.json())
+                .then(orders => {
+                    const order = orders.find(o => o.orderId === orderId);
+                    if (!order) return;
+                    let html = `<div><b>Order ID:</b> ${order.orderId}</div>`;
+                    html += `<div><b>Customer:</b> ${order.customer.name}</div>`;
+                    html += `<div><b>Date:</b> ${new Date(order.createdAt).toLocaleDateString()}</div>`;
+                    html += `<div><b>Status:</b> ${order.status}</div>`;
+                    html += `<div style='margin-top:10px;'><b>Products:</b><ul style='margin:0 0 0 18px;padding:0;'>`;
+                    if (order.products && order.products.length > 0) {
+                        order.products.forEach(p => {
+                            html += `<li>${p.product} <span style='color:#888;'>(x${p.quantity})</span></li>`;
+                        });
+                    } else {
+                        html += '<li>No products</li>';
+                    }
+                    html += '</ul></div>';
+                    document.getElementById('orderDetailsBody').innerHTML = html;
+                    document.getElementById('orderDetailsModal').style.display = 'flex';
+                });
+        }
+        function closeOrderDetailsModal() {
+            document.getElementById('orderDetailsModal').style.display = 'none';
+        }
+        function showConfirmAssignModal() {
+            const orderId = document.getElementById('orderId').textContent;
+            const salesmanSelect = document.getElementById('salesman');
+            const salesmanId = salesmanSelect.value;
+            const salesmanName = salesmanSelect.options[salesmanSelect.selectedIndex].text;
+            if (!salesmanId) {
+                return;
+            }
+            document.getElementById('confirmAssignBody').innerHTML = `Are you sure you want to assign <span style='color:var(--primary-dark);font-weight:600;'>${salesmanName}</span> to order <span style='color:var(--secondary);font-weight:600;'>${orderId}</span>?`;
+            document.getElementById('confirmAssignModal').style.display = 'flex';
+        }
+        function closeConfirmAssignModal() {
+            document.getElementById('confirmAssignModal').style.display = 'none';
+        }
         // Modal functions
         function openAssignModal(orderId) {
             document.getElementById('orderId').textContent = orderId;
             document.getElementById('assignModal').style.display = 'flex';
+            // Fetch salesmen from backend and populate dropdown
+            fetch('/api/salesmen')
+                .then(res => res.json())
+                .then(salesmen => {
+                    const select = document.getElementById('salesman');
+                    select.innerHTML = '<option value="">-- Select Salesman --</option>';
+                    salesmen.forEach(s => {
+                        select.innerHTML += `<option value="${s._id}">${s.name}</option>`;
+                    });
+                });
         }
         function closeAssignModal() {
             document.getElementById('assignModal').style.display = 'none';
         }
-        function assignSalesman() {
+        function assignSalesman(confirm) {
             const orderId = document.getElementById('orderId').textContent;
             const salesman = document.getElementById('salesman').value;
-            if (salesman) {
-                alert(`Order ${orderId} has been assigned to ${salesman}`);
-                closeAssignModal();
-            } else {
-                alert('Please select a salesman');
+            if (!salesman) {
+                return;
             }
+            if (!confirm) {
+                showConfirmAssignModal();
+                return;
+            }
+            // Find the order by orderId (from loaded orders)
+            fetch('/api/orders')
+                .then(res => res.json())
+                .then(orders => {
+                    const order = orders.find(o => o.orderId === orderId);
+                    if (!order) {
+                        return;
+                    }
+                    // Update order with salesman assignment
+                    fetch(`/api/orders/${order._id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ salesman, status: 'salesman assigned' })
+                    })
+                    .then(res => res.json())
+                    .then(updated => {
+                        closeAssignModal();
+                        closeConfirmAssignModal();
+                        fetchDashboardData();
+                    });
+                });
         }
         // Close modal when clicking outside
         window.onclick = function(event) {
@@ -656,11 +774,95 @@
             }
             if (logoutBtn) {
                 logoutBtn.onclick = function() {
-                    alert('Logged out!');
-                    // Add your logout logic here
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('role');
+                    window.location.href = '/Login.html';
                 };
             }
         });
+        async function fetchDashboardData() {
+            // Orders
+            const ordersRes = await fetch('/api/orders');
+            const orders = await ordersRes.json();
+            document.getElementById('ordersCount').textContent = orders.length;
+            // Revenue
+            let revenue = 0;
+            orders.forEach(o => revenue += o.totalAmount);
+            document.getElementById('revenueCount').textContent = `$${revenue}`;
+            // Customers
+            const customersRes = await fetch('/api/customers');
+            const customers = await customersRes.json();
+            document.getElementById('customersCount').textContent = customers.length;
+            // Products
+            const productsRes = await fetch('/api/products');
+            const products = await productsRes.json();
+            document.getElementById('productsCount').textContent = products.length;
+            // Render orders table
+            renderOrdersTable(orders);
+        }
+        function renderOrdersTable(orders) {
+            const tbody = document.querySelector('.orders-table tbody');
+            tbody.innerHTML = '';
+            orders.forEach(order => {
+                const tr = document.createElement('tr');
+                let salesmanName = '-';
+                if (order.salesman && order.salesman.name) {
+                    salesmanName = order.salesman.name;
+                }
+                tr.innerHTML = `
+                    <td>${order.orderId}</td>
+                    <td>${order.customer.name}</td>
+                    <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td>$${order.totalAmount}</td>
+                    <td><span class="status ${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></td>
+                    <td>${salesmanName}</td>
+                    <td>
+                        <button class="action-btn assign-btn" onclick="openAssignModal('${order.orderId}')">Assign</button>
+                        <button class="action-btn view-btn" onclick="openOrderDetailsModal('${order.orderId}')">View</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        document.addEventListener('DOMContentLoaded', fetchDashboardData);
+        
+        // Dynamic sidebar navigation for SPA experience
+        function loadPage(page) {
+            let url = '';
+            if (page === 'dashboard') url = '/admin.html';
+            if (page === 'orders') url = '/orders';
+            if (page === 'sales-progress') url = '/sales_progres';
+            if (page === 'products') url = '/products';
+            if (page === 'customers') url = '/customers';
+            window.location.href = url;
+        }
+        document.getElementById('dashboardLink').onclick = function(e) {
+            e.preventDefault();
+            loadPage('dashboard');
+        };
+        document.getElementById('ordersLink').onclick = function(e) {
+            e.preventDefault();
+            loadPage('orders');
+        };
+        document.getElementById('salesProgressLink').onclick = function(e) {
+            e.preventDefault();
+            loadPage('sales-progress');
+        };
+        document.getElementById('productsLink').onclick = function(e) {
+            e.preventDefault();
+            loadPage('products');
+        };
+        document.getElementById('customersLink').onclick = function(e) {
+            e.preventDefault();
+            loadPage('customers');
+        };
+
+        // Role-based access control
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        if (!token || role !== 'admin') {
+            window.location.href = '/Login.html';
+        }
     </script>
 </body>
 </html>

@@ -10,4 +10,29 @@ const dashboard = (req, res) => {
  res.sendFile(path.join(__dirname, "../../Frontend", "admin.html"));
 };
 
-module.exports = dashboard ;
+
+const order = (req, res) => {
+    console.log("Hello World From dashboard!!!")
+ res.sendFile(path.join(__dirname, "../../Frontend", "orders.html"));
+};
+
+
+const customers = (req, res) => {
+    console.log("Hello World From dashboard!!!")
+ res.sendFile(path.join(__dirname, "../../Frontend", "customers.html"));
+};
+
+
+const products = (req, res) => {
+    console.log("Hello World From dashboard!!!")
+ res.sendFile(path.join(__dirname, "../../Frontend", "products.html"));
+};
+
+
+
+const login = (req, res) => {
+    console.log("Hello World From dashboard!!!")
+ res.sendFile(path.join(__dirname, "../../Frontend", "login.html"));
+};
+
+module.exports = {dashboard,login,order,customers,products} ;

@@ -2,16 +2,17 @@ const jwt = require("jsonwebtoken");
 
 const authMiddleware = (req, res, next) => {
   try {
-    // Get token from Authorization header
-    // Example: Authorization: Bearer <token>
+    // Get token from Authorization header or cookie
+    let token = null;
     const authHeader = req.headers["authorization"];
-    if (!authHeader) {
-      return res.status(401).json({ message: "No token provided" });
+    if (authHeader) {
+      token = authHeader.split(" ")[1]; // remove "Bearer"
+    } else if (req.cookies && req.cookies.token) {
+      token = req.cookies.token;
     }
 
-    const token = authHeader.split(" ")[1]; // remove "Bearer"
     if (!token) {
-      return res.status(401).json({ message: "Invalid token format" });
+      return res.status(401).json({ message: "No token provided" });
     }
 
     // Verify and decode token
