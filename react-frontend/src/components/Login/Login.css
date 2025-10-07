@@ -1,0 +1,41 @@
+/* Custom styles that can't be easily achieved with Tailwind */
+
+/* Animation for the toast */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Apply the animation to toast */
+.toast-enter {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+/* Custom focus styles for better accessibility */
+input:focus, button:focus {
+  @apply ring-2 ring-offset-2 ring-green-500 outline-none;
+}
+
+/* Custom scrollbar for the page */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}

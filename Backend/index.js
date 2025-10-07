@@ -1,9 +1,10 @@
 const express = require("express");
 const app = express();
-require("dotenv").config()
+require("dotenv").config();
 const path = require("path");
+const cors = require('cors');
 const port = process.env.PORT || 3000;
-const db = require("./confg/dbConnnection")
+const db = require("./confg/dbConnnection");
 const userRouter = require("./routes/userRoutes");
 const orderRouter = require("./routes/orderRoutes");
 const productRouter = require("./routes/productRoutes");
@@ -14,7 +15,21 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 // require('./whatsappAutomation/whatsappApi');
 
+// Enable CORS
 db();
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Credentials', true);
+  
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
 app.use(express.json());
 app.use(cookieParser());
 
