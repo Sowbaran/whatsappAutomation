@@ -167,7 +167,6 @@
                 <h1>My Assigned Orders</h1>
             </div>
             
-            <!-- Status Filters -->
             <div class="status-filters">
                 <div class="status-filter active" data-status="all">All Orders</div>
                 <div class="status-filter" data-status="pending">Pending</div>
@@ -197,23 +196,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Assigned orders will be rendered here -->
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
             
-            <!-- Modal for Order Details -->
-            <div class="modal" id="orderDetailsModal">
-                <div class="modal-content" style="min-width:400px;">
-                    <h3>Order Details</h3>
-                    <div id="orderDetailsBody"></div>
-                    <div class="modal-actions">
-                        <button type="button" class="action-btn view-btn" onclick="closeOrderDetailsModal()">Close</button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Modal for Update Status -->
             <div class="modal" id="updateModal">
                 <div class="modal-content">
                     <h3>Update Order Status</h3>
@@ -270,7 +256,9 @@
                 const tr = document.createElement('tr');
                 tr.dataset.id = order._id;
                 tr.style.cursor = 'pointer';
-                tr.onclick = () => openOrderDetailsModal(order._id);
+                
+                // THIS LINE ENSURES REDIRECTION TO THE DETAILS PAGE
+                tr.onclick = () => window.location.href = '/order-details.html?id=' + order._id;
                 
                 const statusClass = order.status.replace(/ /g, '-').toLowerCase();
                 
@@ -297,49 +285,9 @@
                 tbody.appendChild(tr);
             });
         }
-
-        async function openOrderDetailsModal(orderId) {
-            const order = ordersData.find(o => o._id === orderId);
-            if (!order) return;
-            
-            let productsHtml = '';
-            if (order.products && order.products.length > 0) {
-                productsHtml = `<ul>` + order.products.map(p => {
-                    let name = p.product ? p.product.name : 'Product';
-                    let price = p.price !== undefined ? ` ($${p.price})` : '';
-                    return `<li><strong>${name}</strong>${price} &times; <strong>${p.quantity}</strong></li>`;
-                }).join('') + `</ul>`;
-            } else if (order.totalAmount > 0) {
-                productsHtml = '<em><span style="color:red">Warning: Products missing but total price is set. Please check order data.</span></em>';
-            } else {
-                productsHtml = '<em>No products found for this order.</em>';
-            }
-            
-            let salesmanHtml = '';
-            if (order.salesman && order.salesman.name) {
-                salesmanHtml = `<strong>Assigned Salesman:</strong> ${order.salesman.name}<br>`;
-            }
-            
-            const pickupStatus = order.pickedUp ? 
-                '<span class="status picked-up">Picked Up</span>' : 
-                '<span class="status pending">Not Picked Up</span>';
-            
-            document.getElementById('orderDetailsBody').innerHTML = `
-                <strong>Order ID:</strong> ${order.orderId}<br>
-                <strong>Customer:</strong> ${order.customer ? order.customer.name : 'N/A'}<br>
-                <strong>Date:</strong> ${new Date(order.createdAt).toLocaleString()}<br>
-                <strong>Status:</strong> <span class="status ${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span><br>
-                <strong>Pickup Status:</strong> ${pickupStatus}<br>
-                <strong>Total:</strong> $${order.totalAmount}<br>
-                ${salesmanHtml}
-                <strong>Products:</strong> ${productsHtml}
-            `;
-            document.getElementById('orderDetailsModal').style.display = 'flex';
-        }
         
-        function closeOrderDetailsModal() {
-            document.getElementById('orderDetailsModal').style.display = 'none';
-        }
+        // REMOVED: async function openOrderDetailsModal(orderId) { ... }
+        // REMOVED: function closeOrderDetailsModal() { ... }
         
         function setupStatusFilters() {
             const filters = document.querySelectorAll('.status-filter');

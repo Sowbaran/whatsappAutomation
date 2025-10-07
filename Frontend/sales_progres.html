@@ -301,6 +301,7 @@
             border-radius: 10px;
             padding: 20px;
             box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+            position: relative;
         }
         
         .salesman-header {
@@ -368,6 +369,310 @@
             font-style: italic;
         }
         
+        /* Assign Button */
+        .assign-order-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(37, 211, 102, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .assign-order-btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 18px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            border: 2.5px solid var(--primary);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary);
+            padding: 20px 25px;
+            border-radius: 15px 15px 0 0;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .close {
+            font-size: 28px;
+            cursor: pointer;
+            color: white;
+            transition: color 0.2s;
+        }
+        
+        .close:hover {
+            color: var(--danger);
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 15px 25px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: #f0f2f5;
+            color: var(--dark);
+            font-weight: 500;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .order-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .order-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .order-item:last-child {
+            border-bottom: none;
+        }
+        
+        .order-item input[type="checkbox"] {
+            margin-right: 12px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+        
+        .order-info {
+            flex: 1;
+        }
+        
+        .order-id {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .order-customer {
+            font-size: 14px;
+            color: var(--gray);
+            margin-top: 3px;
+        }
+        
+        .order-status {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: #f0f2f5;
+            color: var(--dark);
+        }
+        
+        /* Confirmation Modal */
+        .confirmation-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+        }
+        
+        .confirmation-content {
+            background: white;
+            border-radius: 18px;
+            width: 450px;
+            max-width: 90%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            border: 2.5px solid var(--primary);
+            overflow: hidden;
+        }
+        
+        .confirmation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary);
+            padding: 20px 25px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .confirmation-body {
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .confirmation-icon {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .confirmation-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+        
+        .confirmation-text {
+            color: var(--gray);
+            margin-bottom: 20px;
+        }
+        
+        .confirmation-details {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: left;
+        }
+        
+        .confirmation-footer {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 15px 25px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        /* Alert Modal */
+        .alert-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1200;
+        }
+        
+        .alert-content {
+            background: white;
+            border-radius: 18px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            border: 2.5px solid var(--warning);
+            overflow: hidden;
+        }
+        
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--warning);
+            padding: 20px 25px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .alert-body {
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .alert-icon {
+            font-size: 48px;
+            color: var(--warning);
+            margin-bottom: 15px;
+        }
+        
+        .alert-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+        
+        .alert-text {
+            color: var(--gray);
+            margin-bottom: 20px;
+        }
+        
+        .alert-footer {
+            display: flex;
+            justify-content: center;
+            padding: 15px 25px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
         /* Responsive styles */
         @media (max-width: 1024px) {
             .container {
@@ -430,6 +735,14 @@
                 flex-direction: column;
                 text-align: center;
             }
+            
+            .modal-content, .confirmation-content, .alert-content {
+                width: 95%;
+            }
+            
+            .confirmation-footer, .alert-footer {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -440,11 +753,11 @@
                 <h2><i class="fas fa-bolt"></i> ElectroShop</h2>
             </div>
             <ul class="sidebar-menu">
-                <li><a href="#" id="dashboardLink"><i class="fas fa-home"></i> Dashboard</a></li>
-                <li><a href="#" id="ordersLink"><i class="fas fa-shopping-cart"></i> Orders</a></li>
-                <li class="active"><a href="#" id="salesProgressLink"><i class="fas fa-chart-line"></i> Sales Progress</a></li>
-                <li><a href="#" id="productsLink"><i class="fas fa-box"></i> Products</a></li>
-                <li><a href="#" id="customersLink"><i class="fas fa-users"></i> Customers</a></li>
+                <li><a href="admin.html"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="orders.html"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+                <li class="active"><a href="sales_progres.html"><i class="fas fa-chart-line"></i> Sales Progress</a></li>
+                <li><a href="products.html"><i class="fas fa-box"></i> Products</a></li>
+                <li><a href="customers.html"><i class="fas fa-users"></i> Customers</a></li>
             </ul>
         </aside>
         <main class="main-content">
@@ -562,69 +875,149 @@
         </main>
     </div>
 
+    <!-- Assign Orders Modal -->
+    <div class="modal" id="assignOrdersModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span><i class="fas fa-user-plus" style="margin-right:8px;"></i> Assign Orders</span>
+                <span class="close" onclick="closeAssignOrdersModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px;">
+                    <div style="background:#e9f7ef;border-radius:50%;width:48px;height:48px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fas fa-user-tie" style="font-size:2rem;color:var(--primary);"></i>
+                    </div>
+                    <div>
+                        <div style="color:#222;font-size:1.1rem;font-weight:500;" id="assignSalesmanName">Assign Orders to Salesman</div>
+                        <div style="color:#555;font-size:0.95rem;">Select orders to assign</div>
+                    </div>
+                </div>
+                
+                <div class="order-list" id="assignableOrdersList">
+                    <!-- Orders will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAssignOrdersModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="showConfirmationModal()">Assign Selected Orders</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="confirmation-modal" id="confirmationModal">
+        <div class="confirmation-content">
+            <div class="confirmation-header">
+                <span><i class="fas fa-check-circle" style="margin-right:8px;"></i> Confirm Assignment</span>
+                <span class="close" onclick="closeConfirmationModal()">&times;</span>
+            </div>
+            <div class="confirmation-body">
+                <div class="confirmation-icon">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="confirmation-title">Confirm Order Assignment</div>
+                <div class="confirmation-text">
+                    Are you sure you want to assign the selected orders to this salesman?
+                </div>
+                <div class="confirmation-details" id="confirmationDetails">
+                    <!-- Assignment details will be populated here -->
+                </div>
+            </div>
+            <div class="confirmation-footer">
+                <button class="btn btn-secondary" onclick="closeConfirmationModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="assignSelectedOrders()">Confirm Assignment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div class="alert-modal" id="alertModal">
+        <div class="alert-content">
+            <div class="alert-header">
+                <span><i class="fas fa-exclamation-triangle" style="margin-right:8px;"></i> No Orders Selected</span>
+                <span class="close" onclick="closeAlertModal()">&times;</span>
+            </div>
+            <div class="alert-body">
+                <div class="alert-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="alert-title">No Orders Selected</div>
+                <div class="alert-text">
+                    Please select at least one order to assign to the salesman.
+                </div>
+            </div>
+            <div class="alert-footer">
+                <button class="btn btn-primary" onclick="closeAlertModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let salesmen = [];
         let orders = [];
-
+        let currentSalesmanId = null;
+        let selectedOrderIds = [];
+        
         // Initialize the page
-        document.addEventListener('DOMContentLoaded', function() {
-            fetchData();
+        document.addEventListener('DOMContentLoaded', async function() {
+            await fetchSalesmen();
+            await fetchOrders();
+            renderStats();
+            renderSalesmanFilter();
+            renderOrdersTable(orders);
+            renderSalesmanCards();
+            
             // Add event listeners for filters
             document.getElementById('statusFilter').addEventListener('change', filterOrders);
             document.getElementById('salesmanFilter').addEventListener('change', filterOrders);
             document.getElementById('assignmentFilter').addEventListener('change', filterOrders);
             document.getElementById('searchOrder').addEventListener('input', filterOrders);
         });
-
-        async function fetchData() {
+        
+        // Fetch salesmen from backend
+        async function fetchSalesmen() {
             try {
-                const [ordersRes, salesmenRes] = await Promise.all([
-                    fetch('/api/orders'),
-                    fetch('/api/salesmen')
-                ]);
-                orders = await ordersRes.json();
-                salesmen = await salesmenRes.json();
-
-                // Process orders to add assignmentType
-                orders.forEach(order => {
-                    if (!order.salesman) {
-                        order.assignmentType = 'unassigned';
-                    } else {
-                        // Assuming if assigned by admin, it's 'admin', else 'self' - but we don't have that info, so default to 'admin'
-                        order.assignmentType = 'admin';
-                    }
-                });
-
-                renderStats();
-                renderSalesmanFilter();
-                renderOrdersTable(orders);
-                renderSalesmanCards();
+                const response = await fetch('/api/salesmen');
+                if (!response.ok) throw new Error('Failed to fetch salesmen');
+                salesmen = await response.json();
             } catch (error) {
-                console.error('Error fetching data:', error);
+                console.error('Error fetching salesmen:', error);
+                salesmen = [];
             }
         }
-
+        
+        // Fetch orders from backend
+        async function fetchOrders() {
+            try {
+                const response = await fetch('/api/orders');
+                if (!response.ok) throw new Error('Failed to fetch orders');
+                orders = await response.json();
+            } catch (error) {
+                console.error('Error fetching orders:', error);
+                orders = [];
+            }
+        }
+        
         // Render statistics
         function renderStats() {
             const totalOrders = orders.length;
             const completedOrders = orders.filter(order => order.status === 'completed').length;
             const pendingOrders = orders.filter(order => order.status === 'pending').length;
-            const activeSalesmen = salesmen.filter(salesman => {
-                const salesmanOrders = orders.filter(order => order.salesman && order.salesman.name === salesman.name);
-                return salesmanOrders.length > 0;
-            }).length;
-
+            const activeSalesmen = salesmen.filter(salesman => 
+                orders.some(order => order.salesman && order.salesman._id === salesman._id)
+            ).length;
+            
             document.getElementById('totalOrders').textContent = totalOrders;
             document.getElementById('completedOrders').textContent = completedOrders;
             document.getElementById('pendingOrders').textContent = pendingOrders;
             document.getElementById('activeSalesmen').textContent = activeSalesmen;
         }
-
+        
         // Render salesman filter options
         function renderSalesmanFilter() {
             const salesmanFilter = document.getElementById('salesmanFilter');
             salesmanFilter.innerHTML = '<option value="all">All Salesmen</option>';
-
+            
             salesmen.forEach(salesman => {
                 const option = document.createElement('option');
                 option.value = salesman._id;
@@ -632,30 +1025,30 @@
                 salesmanFilter.appendChild(option);
             });
         }
-
+        
         // Render orders table
         function renderOrdersTable(ordersToRender) {
             const tbody = document.querySelector('#ordersTable tbody');
             tbody.innerHTML = '';
-
+            
             if (ordersToRender.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: var(--gray);">No orders found matching your filters</td></tr>';
                 return;
             }
-
+            
             ordersToRender.forEach(order => {
                 const tr = document.createElement('tr');
-
+                
                 // Determine status class and text
-                const statusClass = order.status.replace(' ', '-');
-                const statusText = order.status.split('-').map(word =>
+                const statusClass = order.status ? order.status.replace(' ', '-') : '';
+                const statusText = order.status ? order.status.split('-').map(word => 
                     word.charAt(0).toUpperCase() + word.slice(1)
-                ).join(' ');
-
+                ).join(' ') : 'Unknown';
+                
                 // Determine assignment type class and text
                 let assignmentClass = '';
                 let assignmentText = '';
-
+                
                 if (order.assignmentType === 'admin') {
                     assignmentClass = 'admin-assigned';
                     assignmentText = 'Admin Assigned';
@@ -665,167 +1058,236 @@
                 } else {
                     assignmentText = 'Unassigned';
                 }
-
-                const salesmanName = order.salesman ? order.salesman.name : 'Not Assigned';
-
+                
                 tr.innerHTML = `
-                    <td>${order.orderId}</td>
-                    <td>${order.customer.name}</td>
-                    <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td>${order.orderId || order._id}</td>
+                    <td>${order.customer?.name || 'Unknown'}</td>
+                    <td>${order.date || (order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A')}</td>
                     <td><span class="status ${statusClass}">${statusText}</span></td>
-                    <td>${salesmanName}</td>
+                    <td>${order.salesman ? order.salesman.name : 'Not Assigned'}</td>
                     <td><span class="assignment-type ${assignmentClass}">${assignmentText}</span></td>
-                    <td>$${order.totalAmount.toFixed(2)}</td>
+                    <td>$${order.totalAmount ? order.totalAmount.toFixed(2) : '0.00'}</td>
                     <td>
-                        <button class="action-btn view-btn" onclick="viewOrderDetails('${order.orderId}')">
-                            <i class="fas fa-eye"></i> View
-                        </button>
+<button onclick="window.location.href='order-details.html?id=${order._id}'" class="action-btn view-btn">
+<i class="fas fa-eye"></i> View
+</button>
                     </td>
                 `;
-
+                
                 tbody.appendChild(tr);
             });
         }
-
+        
         // Render salesman cards
         function renderSalesmanCards() {
             const salesmanContainer = document.getElementById('salesmanContainer');
             salesmanContainer.innerHTML = '';
-
+            
             salesmen.forEach(salesman => {
+                const ordersForSalesman = orders.filter(order => order.salesman && order.salesman._id === salesman._id);
+                const completedCount = ordersForSalesman.filter(order => order.status === 'completed').length;
+                const totalOrders = ordersForSalesman.length;
+                const completionRate = totalOrders > 0 ? Math.round((completedCount / totalOrders) * 100) : 0;
+                
                 const card = document.createElement('div');
                 card.className = 'salesman-card';
-
-                // Get salesman's orders
-                const salesmanOrders = orders.filter(order => order.salesman && order.salesman._id === salesman._id);
-                const completedOrders = salesmanOrders.filter(order => order.status === 'completed').length;
-                const pendingOrders = salesmanOrders.filter(order => order.status !== 'completed').length;
-
-                // Get initials for avatar
-                const initials = salesman.name.split(' ').map(name => name[0]).join('');
-
+                
                 card.innerHTML = `
                     <div class="salesman-header">
-                        <div class="salesman-avatar">${initials}</div>
+                        <div class="salesman-avatar">${salesman.name.charAt(0)}</div>
                         <div class="salesman-info">
                             <div class="salesman-name">${salesman.name}</div>
                             <div class="salesman-contact">${salesman.email}</div>
-                            <div class="salesman-contact">${salesman.phone || 'N/A'}</div>
                         </div>
+                        <button class="assign-order-btn" onclick="openAssignOrdersModal('${salesman._id}')">
+                            <i class="fas fa-plus"></i>
+                        </button>
                     </div>
                     <div class="salesman-stats">
                         <div class="salesman-stat">
-                            <div class="salesman-stat-value">${salesmanOrders.length}</div>
+                            <div class="salesman-stat-value">${totalOrders}</div>
                             <div class="salesman-stat-label">Total Orders</div>
                         </div>
                         <div class="salesman-stat">
-                            <div class="salesman-stat-value">${completedOrders}</div>
+                            <div class="salesman-stat-value">${completedCount}</div>
                             <div class="salesman-stat-label">Completed</div>
                         </div>
                         <div class="salesman-stat">
-                            <div class="salesman-stat-value">${pendingOrders}</div>
-                            <div class="salesman-stat-label">Pending</div>
+                            <div class="salesman-stat-value">${completionRate}%</div>
+                            <div class="salesman-stat-label">Success Rate</div>
                         </div>
                     </div>
-                    ${salesmanOrders.length > 0 ?
-                        `<div>
-                            <strong>Assigned Orders:</strong>
-                            <ul style="margin-top: 10px;">
-                                ${salesmanOrders.map(order =>
-                                    `<li>${order.orderId} - ${order.customer.name} (${order.status})</li>`
-                                ).join('')}
-                            </ul>
-                        </div>` :
-                        '<div class="no-orders">No orders assigned</div>'
-                    }
+                ${totalOrders === 0 ?
+                    '<div class="no-orders">No orders assigned yet</div>' :
+                    '<div style="font-size: 14px; color: var(--gray);">Click + to assign more orders</div>'
+                }
                 `;
-
                 salesmanContainer.appendChild(card);
             });
         }
-
-        // Filter orders based on selected criteria
+        
+        // Filter orders based on filters and search
         function filterOrders() {
             const statusFilter = document.getElementById('statusFilter').value;
             const salesmanFilter = document.getElementById('salesmanFilter').value;
             const assignmentFilter = document.getElementById('assignmentFilter').value;
-            const searchText = document.getElementById('searchOrder').value.toLowerCase();
-
+            const searchQuery = document.getElementById('searchOrder').value.toLowerCase();
+            
             let filteredOrders = orders;
-
-            // Apply status filter
+            
             if (statusFilter !== 'all') {
                 filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
             }
-
-            // Apply salesman filter
+            
             if (salesmanFilter !== 'all') {
                 filteredOrders = filteredOrders.filter(order => order.salesman && order.salesman._id === salesmanFilter);
             }
-
-            // Apply assignment filter
+            
             if (assignmentFilter !== 'all') {
                 if (assignmentFilter === 'unassigned') {
-                    filteredOrders = filteredOrders.filter(order => !order.salesman);
+                    filteredOrders = filteredOrders.filter(order => !order.assignmentType);
                 } else {
                     filteredOrders = filteredOrders.filter(order => order.assignmentType === assignmentFilter);
                 }
             }
-
-            // Apply search filter
-            if (searchText) {
-                filteredOrders = filteredOrders.filter(order =>
-                    order.orderId.toLowerCase().includes(searchText) ||
-                    order.customer.name.toLowerCase().includes(searchText)
-                );
+            
+            if (searchQuery) {
+                filteredOrders = filteredOrders.filter(order => {
+                    const orderId = order.orderId || order._id || '';
+                    const customerName = order.customer?.name || '';
+                    return orderId.toLowerCase().includes(searchQuery) || customerName.toLowerCase().includes(searchQuery);
+                });
             }
-
+            
             renderOrdersTable(filteredOrders);
         }
-
-        // View order details (would navigate to order details page in a real app)
-        function viewOrderDetails(orderId) {
-            alert(`Viewing details for order ID: ${orderId}\n\nIn a real application, this would navigate to the order details page.`);
-            // window.location.href = `order-details.html?id=${orderId}`;
+        
+        // Open assign orders modal for a salesman
+        function openAssignOrdersModal(salesmanId) {
+            currentSalesmanId = salesmanId;
+            selectedOrderIds = [];
+            const salesman = salesmen.find(s => s._id === salesmanId);
+            if (!salesman) return;
+            
+            document.getElementById('assignSalesmanName').textContent = `Assign Orders to ${salesman.name}`;
+            
+            // Populate assignable orders (unassigned or assigned to others)
+            const assignableOrders = orders.filter(order => !order.salesman || order.salesman._id !== salesmanId);
+            const assignableOrdersList = document.getElementById('assignableOrdersList');
+            assignableOrdersList.innerHTML = '';
+            
+            if (assignableOrders.length === 0) {
+                assignableOrdersList.innerHTML = '<div class="no-orders">No orders available for assignment</div>';
+            } else {
+                assignableOrders.forEach(order => {
+                    const orderItem = document.createElement('div');
+                    orderItem.className = 'order-item';
+                    orderItem.innerHTML = `
+                        <input type="checkbox" id="order_${order._id}" value="${order._id}">
+                        <div class="order-info">
+                            <div class="order-id">${order.orderId || order._id}</div>
+                            <div class="order-customer">${order.customer?.name || 'Unknown'}</div>
+                        </div>
+                    `;
+                    assignableOrdersList.appendChild(orderItem);
+                });
+            }
+            
+            document.getElementById('assignOrdersModal').style.display = 'flex';
+        }
+        
+        // Close assign orders modal
+        function closeAssignOrdersModal() {
+            document.getElementById('assignOrdersModal').style.display = 'none';
+            currentSalesmanId = null;
+            selectedOrderIds = [];
+        }
+        
+        // Show confirmation modal before assignment
+        function showConfirmationModal() {
+            const checkboxes = document.querySelectorAll('#assignableOrdersList input[type="checkbox"]:checked');
+            selectedOrderIds = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (selectedOrderIds.length === 0) {
+                showAlertModal('Please select at least one order to assign to the salesman.');
+                return;
+            }
+            
+            const salesman = salesmen.find(s => s._id === currentSalesmanId);
+            if (!salesman) return;
+            
+            const confirmationDetails = document.getElementById('confirmationDetails');
+            confirmationDetails.innerHTML = `
+                <p><strong>Salesman:</strong> ${salesman.name}</p>
+                <p><strong>Orders to assign:</strong> ${selectedOrderIds.length}</p>
+            `;
+            
+            document.getElementById('confirmationModal').style.display = 'flex';
+        }
+        
+        // Close confirmation modal
+        function closeConfirmationModal() {
+            document.getElementById('confirmationModal').style.display = 'none';
+        }
+        
+        // Assign selected orders to the salesman
+        async function assignSelectedOrders() {
+            if (!currentSalesmanId || selectedOrderIds.length === 0) {
+                closeConfirmationModal();
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/assign-orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        salesmanId: currentSalesmanId,
+                        orderIds: selectedOrderIds
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to assign orders');
+                
+                // Refresh data after assignment
+                await fetchOrders();
+                renderStats();
+                renderOrdersTable(orders);
+                renderSalesmanCards();
+                
+                closeConfirmationModal();
+                closeAssignOrdersModal();
+            } catch (error) {
+                console.error('Error assigning orders:', error);
+                showAlertModal('Failed to assign orders. Please try again.');
+            }
+        }
+        
+        // Show alert modal with message
+        function showAlertModal(message) {
+            const alertText = document.querySelector('#alertModal .alert-text');
+            alertText.textContent = message;
+            document.getElementById('alertModal').style.display = 'flex';
+        }
+        
+        // Close alert modal
+        function closeAlertModal() {
+            document.getElementById('alertModal').style.display = 'none';
         }
 
-        // Dynamic sidebar navigation for SPA experience
-        function loadPage(page) {
-            let url = '';
-            if (page === 'dashboard') url = '/admin.html';
-            if (page === 'orders') url = '/orders';
-            if (page === 'sales-progress') url = '/sales_progres';
-            if (page === 'products') url = '/products';
-            if (page === 'customers') url = '/customers';
-            window.location.href = url;
-        }
-        document.getElementById('dashboardLink').onclick = function(e) {
-            e.preventDefault();
-            loadPage('dashboard');
-        };
-        document.getElementById('ordersLink').onclick = function(e) {
-            e.preventDefault();
-            loadPage('orders');
-        };
-        document.getElementById('salesProgressLink').onclick = function(e) {
-            e.preventDefault();
-            loadPage('sales-progress');
-        };
-        document.getElementById('productsLink').onclick = function(e) {
-            e.preventDefault();
-            loadPage('products');
-        };
-        document.getElementById('customersLink').onclick = function(e) {
-            e.preventDefault();
-            loadPage('customers');
-        };
 
-        // Role-based access control
-        const token = localStorage.getItem('token');
-        const role = localStorage.getItem('role');
-        if (!token || role !== 'admin') {
-            window.location.href = '/Login.html';
-        }
-    </script>
-</body>
-</html>
+        </script>
+
+        <!-- Order Details Modal -->
+        <div class="modal" id="orderDetailsModal" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 2000;">
+            <div class="modal-content" style="background: white; border-radius: 15px; width: 600px; max-width: 90%; max-height: 80vh; overflow-y: auto; padding: 20px; position: relative;">
+                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; background: var(--primary); color: white; padding: 15px 20px; border-radius: 15px 15px 0 0;">
+                    <h3>Order Details - <span id="modalOrderId"></span></h3>
+                    <span class="close" style="cursor:pointer; font-size: 28px;" onclick="closeOrderDetailsModal()">&times;</span>
+                </div>
+                <div class="modal-body" style="padding: 20px;">
+                    <p><strong>Customer Name:</strong> <span id="modalCustomerName"></span></p>
+                    <p><strong>Email:</strong> <span id="modalCustomerEmail"></span></p>
+                    <p><strong>Phone:</strong> <span id="modalCustomerPhone"></span></p>
+                    <p><strong>Shipping Address:</strong> <span id="modalShippingAddress"></span></p>
+                    <p><strong>Billing Address:</strong> <span id="modalBillingAddress"></span></p>

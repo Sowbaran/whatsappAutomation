@@ -255,7 +255,7 @@
                     <td>${order.customer.name}</td>
                     <td>${new Date(order.createdAt).toLocaleDateString()}</td>
                     <td><span class="status ${statusClass}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></td>
-                    <td>$${order.totalAmount}</td>
+                    <td>₹${order.totalAmount}</td>
                     <td>
                         <button class="action-btn update-btn" onclick="event.stopPropagation();openUpdateModal(this)"><i class="fas fa-edit"></i> Update</button>
                         <button class="action-btn delete-btn" onclick="event.stopPropagation();deleteOrder(this)"><i class="fas fa-trash"></i> Delete</button>

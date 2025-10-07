@@ -54,7 +54,7 @@ const user = async(req,res) =>{
         return res.json({
             message: "Login successful",
             role: user.role,
-
+            token,
             redirectUrl: "/admin"
         });
     }

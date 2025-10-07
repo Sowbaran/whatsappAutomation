@@ -241,7 +241,9 @@
                 }
 
                 ordersData = await response.json();
-                renderOrdersTable(ordersData);
+                // Filter: only show orders not picked up by any salesman
+                const unpickedOrders = ordersData.filter(order => !order.pickedUp && (!order.pickedUpBy || order.pickedUpBy === null || order.pickedUpBy === ''));
+                renderOrdersTable(unpickedOrders);
             } catch (error) {
                 console.error('Error loading orders:', error);
                 alert('Failed to load orders. Please try again.');
@@ -255,7 +257,7 @@
                 const tr = document.createElement('tr');
                 tr.dataset.id = order._id;
                 tr.style.cursor = 'pointer';
-                tr.onclick = () => openOrderDetailsModal(order._id);
+                tr.onclick = () => window.location.href = '../order-details.html?id=' + order._id;
                 
                 const statusClass = order.status.replace(/ /g, '-').toLowerCase();
                 const buttonClass = order.pickedUp ? 'drop-btn' : 'pickup-btn';

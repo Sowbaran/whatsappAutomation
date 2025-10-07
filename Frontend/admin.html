@@ -12,7 +12,7 @@
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         :root {
             --primary: #25D366;
             --primary-dark: #128C7E;
@@ -24,18 +24,18 @@
             --warning: #FFC107;
             --danger: #DC3545;
         }
-        
+
         body {
             background-color: #f0f2f5;
             color: #333;
             line-height: 1.6;
         }
-        
+
         .container {
             display: flex;
             min-height: 100vh;
         }
-        
+
         /* Sidebar Styles */
         .sidebar {
             width: 250px;
@@ -44,45 +44,45 @@
             padding: 20px 0;
             transition: all 0.3s;
         }
-        
+
         .sidebar-header {
             padding: 0 20px 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
+
         .sidebar-header h2 {
             color: white;
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        
+
         .sidebar-header h2 i {
             color: var(--primary);
         }
-        
+
         .sidebar-menu {
             list-style: none;
             padding: 20px 0;
         }
-        
+
         .sidebar-menu li {
             padding: 10px 20px;
             margin: 5px 0;
             border-left: 4px solid transparent;
             transition: all 0.3s;
         }
-        
+
         .sidebar-menu li:hover {
             background: rgba(255, 255, 255, 0.1);
             border-left: 4px solid var(--primary);
         }
-        
+
         .sidebar-menu li.active {
             background: rgba(255, 255, 255, 0.1);
             border-left: 4px solid var(--primary);
         }
-        
+
         .sidebar-menu a {
             color: white;
             text-decoration: none;
@@ -90,14 +90,14 @@
             align-items: center;
             gap: 10px;
         }
-        
+
         /* Main Content Styles */
         .main-content {
             flex: 1;
             padding: 20px;
             overflow-y: auto;
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -106,17 +106,17 @@
             padding-bottom: 15px;
             border-bottom: 1px solid #e0e0e0;
         }
-        
+
         .header h1 {
             color: var(--dark);
         }
-        
+
         .user-info {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        
+
         .user-avatar {
             width: 40px;
             height: 40px;
@@ -128,7 +128,7 @@
             justify-content: center;
             font-weight: bold;
         }
-        
+
         /* Dashboard Cards */
         .dashboard-cards {
             display: grid;
@@ -136,20 +136,26 @@
             gap: 20px;
             margin-bottom: 30px;
         }
-        
+
         .card {
             background: white;
             border-radius: 10px;
             padding: 20px;
             box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
         }
-        
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
         .stat-card {
             display: flex;
             align-items: center;
             gap: 15px;
         }
-        
+
         .stat-icon {
             width: 60px;
             height: 60px;
@@ -159,37 +165,98 @@
             justify-content: center;
             font-size: 24px;
         }
-        
+
         .orders {
             background: rgba(37, 211, 102, 0.2);
             color: var(--primary);
         }
-        
+
         .revenue {
             background: rgba(84, 82, 238, 0.2);
             color: var(--secondary);
         }
-        
+
         .customers {
             background: rgba(255, 193, 7, 0.2);
             color: var(--warning);
         }
-        
+
         .products {
             background: rgba(220, 53, 69, 0.2);
             color: var(--danger);
         }
-        
+
+        .sales-progress {
+            background: rgba(84, 82, 238, 0.2);
+            color: var(--secondary);
+        }
+
         .stat-info h3 {
             font-size: 24px;
             margin-bottom: 5px;
         }
-        
+
         .stat-info p {
             color: var(--gray);
             font-size: 14px;
         }
-        
+
+        /* Sales Progress Widget - Compact Version */
+        .sales-progress-widget-compact {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .sales-progress-widget-compact:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .progress-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: rgba(84, 82, 238, 0.2);
+            color: var(--secondary);
+        }
+
+        .progress-info h3 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .progress-info p {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        .progress-bar-compact {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+            width: 100%;
+        }
+
+        .progress-fill-compact {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+            border-radius: 4px;
+            transition: width 1s ease-in-out;
+        }
+
         /* Orders Table */
         .orders-table {
             background: white;
@@ -197,7 +264,7 @@
             overflow: hidden;
             box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
         }
-        
+
         .table-header {
             padding: 20px;
             display: flex;
@@ -205,11 +272,11 @@
             align-items: center;
             border-bottom: 1px solid #e0e0e0;
         }
-        
+
         .table-header h2 {
             color: var(--dark);
         }
-        
+
         .search-box {
             display: flex;
             align-items: center;
@@ -217,57 +284,57 @@
             padding: 8px 15px;
             border-radius: 20px;
         }
-        
+
         .search-box input {
             border: none;
             background: transparent;
             outline: none;
             margin-left: 5px;
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
         }
-        
+
         th, td {
             padding: 15px 20px;
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
         }
-        
+
         th {
             background: #f8f9fa;
             font-weight: 600;
             color: var(--gray);
         }
-        
+
         tr:hover {
             background: #f8f9fa;
         }
-        
+
         .status {
             padding: 5px 10px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 500;
         }
-        
+
         .pending {
             background: rgba(255, 193, 7, 0.2);
             color: var(--warning);
         }
-        
+
         .completed {
             background: rgba(40, 167, 69, 0.2);
             color: var(--success);
         }
-        
+
         .processing {
             background: rgba(84, 82, 238, 0.2);
             color: var(--secondary);
         }
-        
+
         .action-btn {
             padding: 8px 15px;
             border: none;
@@ -276,25 +343,25 @@
             font-weight: 500;
             transition: all 0.3s;
         }
-        
+
         .assign-btn {
             background: var(--primary);
             color: white;
         }
-        
+
         .assign-btn:hover {
             background: var(--primary-dark);
         }
-        
+
         .view-btn {
             background: #f0f2f5;
             color: var(--dark);
         }
-        
+
         .view-btn:hover {
             background: #e0e0e0;
         }
-        
+
         /* Modal */
         .modal {
             display: none;
@@ -308,7 +375,7 @@
             justify-content: center;
             z-index: 1000;
         }
-        
+
         .modal-content {
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             border-radius: 18px;
@@ -318,7 +385,7 @@
             overflow: hidden;
             border: 2.5px solid var(--primary-dark);
         }
-        
+
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -330,7 +397,7 @@
             font-size: 1.2rem;
             font-weight: 600;
         }
-        
+
         .close {
             font-size: 28px;
             cursor: pointer;
@@ -340,17 +407,17 @@
         .close:hover {
             color: var(--danger);
         }
-        
+
         .form-group {
             margin-bottom: 15px;
         }
-        
+
         .form-group label {
             display: block;
             margin-bottom: 5px;
             font-weight: 500;
         }
-        
+
         .form-group select {
             width: 100%;
             padding: 10px;
@@ -358,14 +425,14 @@
             border-radius: 5px;
             background: white;
         }
-        
+
         .modal-footer {
             display: flex;
             justify-content: flex-end;
             gap: 10px;
             margin-top: 20px;
         }
-        
+
         .btn {
             padding: 10px 20px;
             border: none;
@@ -373,7 +440,7 @@
             cursor: pointer;
             font-weight: 500;
         }
-        
+
         .btn-primary {
             background: linear-gradient(90deg, var(--primary) 60%, var(--secondary) 100%);
             color: #fff;
@@ -381,56 +448,56 @@
             letter-spacing: 0.5px;
             box-shadow: 0 2px 8px rgba(37,211,102,0.10);
         }
-        
+
         .btn-primary:hover {
             background: var(--primary-dark);
             filter: brightness(1.08);
         }
-        
+
         .btn-secondary {
             background: rgba(255,255,255,0.85);
             color: var(--dark);
             font-weight: 500;
         }
-        
+
         .btn-secondary:hover {
             background: #e0e0e0;
             filter: brightness(0.98);
         }
-        
+
         /* Responsive */
         @media (max-width: 992px) {
             .container {
                 flex-direction: column;
             }
-            
+
             .sidebar {
                 width: 100%;
                 height: auto;
             }
-            
-            .dashboard-cards {
+
+            .dashboard-cards {  
                 grid-template-columns: repeat(2, 1fr);
             }
         }
-        
+
         @media (max-width: 768px) {
             .dashboard-cards {
                 grid-template-columns: 1fr;
             }
-            
+
             .header {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 15px;
             }
-            
+
             .table-header {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 15px;
             }
-            
+
             .search-box {
                 width: 100%;
             }
@@ -444,27 +511,25 @@
             <div class="sidebar-header">
                 <h2><i class="fas fa-bolt"></i> ElectroShop</h2>
             </div>
-    <!-- Order Details Modal -->
-    <div class="modal" id="orderDetailsModal">
-        <div class="modal-content">
-            <div class="modal-header" style="background:#f8f9fa;color:#222;">
-                <span><i class="fas fa-receipt" style="color:var(--primary);margin-right:8px;"></i> Order Details</span>
-                <span class="close" onclick="closeOrderDetailsModal()">&times;</span>
+            <!-- Order Details Modal -->
+            <div class="modal" id="orderDetailsModal">
+                <div class="modal-content">
+                    <div class="modal-header" style="background:#f8f9fa;color:#222;">
+                        <span><i class="fas fa-receipt" style="color:var(--primary);margin-right:8px;"></i> Order Details</span>
+                        <span class="close" onclick="closeOrderDetailsModal()">&times;</span>
+                    </div>
+                    <div class="modal-body" id="orderDetailsBody" style="color:#222;padding:24px 28px 0 28px;font-size:1.08rem;"></div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="closeOrderDetailsModal()">Close</button>
+                    </div>
+                </div>
             </div>
-            <div class="modal-body" id="orderDetailsBody" style="color:#222;padding:24px 28px 0 28px;font-size:1.08rem;"></div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeOrderDetailsModal()">Close</button>
-            </div>
-        </div>
-    </div>
             <ul class="sidebar-menu">
                 <li class="active"><a href="#" id="dashboardLink"><i class="fas fa-home"></i> Dashboard</a></li>
                 <li><a href="#" id="ordersLink"><i class="fas fa-shopping-cart"></i> Orders</a></li>
                 <li><a href="#" id="salesProgressLink"><i class="fas fa-chart-line"></i> Sales Progress</a></li>
                 <li><a href="#" id="productsLink"><i class="fas fa-box"></i> Products</a></li>
                 <li><a href="#" id="customersLink"><i class="fas fa-users"></i> Customers</a></li>
-
-
             </ul>
         </div>
 
@@ -522,6 +587,19 @@
                         <p>Total Products</p>
                     </div>
                 </div>
+                <!-- New Compact Sales Progress Widget -->
+                <div class="sales-progress-widget-compact" onclick="navigateToSalesProgress()">
+                    <div class="progress-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="progress-info">
+                        <h3 id="completionPercentageCompact">0%</h3>
+                        <p>Order Completion Rate</p>
+                        <div class="progress-bar-compact">
+                            <div class="progress-fill-compact" id="completionBarCompact" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Orders Table -->
@@ -545,67 +623,8 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>#ORD-7012</td>
-                            <td>John Smith</td>
-                            <td>Jun 12, 2023</td>
-                            <td>$1,245.99</td>
-                            <td><span class="status pending">Pending</span></td>
-                            <td>-</td>
-                            <td>
-                                <button class="action-btn assign-btn" onclick="openAssignModal('ORD-7012')">Assign</button>
-                                <button class="action-btn view-btn">View</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#ORD-7011</td>
-                            <td>Emily Johnson</td>
-                            <td>Jun 11, 2023</td>
-                            <td>$899.50</td>
-                            <td><span class="status processing">Processing</span></td>
-                            <td>David Wilson</td>
-                            <td>
-                                <button class="action-btn assign-btn" onclick="openAssignModal('ORD-7011')">Reassign</button>
-                                <button class="action-btn view-btn">View</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#ORD-7010</td>
-                            <td>Michael Brown</td>
-                            <td>Jun 10, 2023</td>
-                            <td>$2,450.00</td>
-                            <td><span class="status completed">Completed</span></td>
-                            <td>Sarah Miller</td>
-                            <td>
-                                <button class="action-btn assign-btn" onclick="openAssignModal('ORD-7010')">Reassign</button>
-                                <button class="action-btn view-btn">View</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#ORD-7009</td>
-                            <td>Jessica Davis</td>
-                            <td>Jun 09, 2023</td>
-                            <td>$545.75</td>
-                            <td><span class="status completed">Completed</span></td>
-                            <td>Robert Taylor</td>
-                            <td>
-                                <button class="action-btn assign-btn" onclick="openAssignModal('ORD-7009')">Reassign</button>
-                                <button class="action-btn view-btn">View</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#ORD-7008</td>
-                            <td>Daniel Martinez</td>
-                            <td>Jun 08, 2023</td>
-                            <td>$1,799.99</td>
-                            <td><span class="status processing">Processing</span></td>
-                            <td>Lisa Anderson</td>
-                            <td>
-                                <button class="action-btn assign-btn" onclick="openAssignModal('ORD-7008')">Reassign</button>
-                                <button class="action-btn view-btn">View</button>
-                            </td>
-                        </tr>
+                    <tbody id="ordersTableBody">
+                        <!-- Orders will be populated by JavaScript -->
                     </tbody>
                 </table>
             </div>
@@ -658,12 +677,276 @@
     </div>
 
     <script>
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchDashboardData();
+            setupEventListeners();
+        });
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // User dropdown
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            if (userMenuBtn && userDropdown) {
+                userMenuBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    userDropdown.style.display = userDropdown.style.display === 'none' || userDropdown.style.display === '' ? 'block' : 'none';
+                };
+            }
+
+            if (logoutBtn) {
+                logoutBtn.onclick = function() {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('role');
+                    window.location.href = '/Login.html';
+                };
+            }
+
+            // Navigation
+            document.getElementById('dashboardLink').onclick = function(e) {
+                e.preventDefault();
+                loadPage('dashboard');
+            };
+            document.getElementById('ordersLink').onclick = function(e) {
+                e.preventDefault();
+                loadPage('orders');
+            };
+            document.getElementById('salesProgressLink').onclick = function(e) {
+                e.preventDefault();
+                navigateToSalesProgress();
+            };
+            document.getElementById('productsLink').onclick = function(e) {
+                e.preventDefault();
+                loadPage('products');
+            };
+            document.getElementById('customersLink').onclick = function(e) {
+                e.preventDefault();
+                loadPage('customers');
+            };
+
+            // Close dropdown when clicking outside
+            window.onclick = function(event) {
+                const dropdown = document.getElementById('userDropdown');
+                const btn = document.getElementById('userMenuBtn');
+                if (dropdown && btn && !btn.contains(event.target) && !dropdown.contains(event.target)) {
+                    dropdown.style.display = 'none';
+                }
+
+                // Close modals when clicking outside
+                const modals = document.querySelectorAll('.modal');
+                modals.forEach(modal => {
+                    if (event.target === modal) {
+                        if (modal.id === 'assignModal') closeAssignModal();
+                        if (modal.id === 'confirmAssignModal') closeConfirmAssignModal();
+                        if (modal.id === 'orderDetailsModal') closeOrderDetailsModal();
+                    }
+                });
+            };
+        }
+
+        // Fetch dashboard data
+        async function fetchDashboardData() {
+            try {
+                // Fetch orders
+                const ordersRes = await fetch('/api/orders');
+                const orders = await ordersRes.json();
+
+                // Fetch customers
+                const customersRes = await fetch('/api/customers');
+                const customers = await customersRes.json();
+
+                // Fetch products
+                const productsRes = await fetch('/api/products');
+                const products = await productsRes.json();
+
+                // Update dashboard stats
+                updateDashboardStats(orders, customers, products);
+
+                // Update sales progress widget
+                updateSalesProgressWidget(orders);
+
+                // Render orders table
+                renderOrdersTable(orders);
+
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+            }
+        }
+
+        // Update dashboard statistics
+        function updateDashboardStats(orders, customers, products) {
+            // Orders count
+            document.getElementById('ordersCount').textContent = orders.length;
+
+            // Revenue
+            let revenue = 0;
+            orders.forEach(order => revenue += order.totalAmount);
+            document.getElementById('revenueCount').textContent = `$${revenue.toLocaleString()}`;
+
+            // Customers count
+            document.getElementById('customersCount').textContent = customers.length;
+
+            // Products count
+            document.getElementById('productsCount').textContent = products.length;
+        }
+
+        // Update sales progress widget
+        function updateSalesProgressWidget(orders) {
+            const totalOrders = orders.length;
+            const completedOrders = orders.filter(order => order.status === 'completed').length;
+
+            const completionPercentage = totalOrders > 0 ? Math.round((completedOrders / totalOrders) * 100) : 0;
+
+            // Update the compact widget values
+            document.getElementById('completionPercentageCompact').textContent = `${completionPercentage}%`;
+
+            // Animate the progress bar
+            setTimeout(() => {
+                document.getElementById('completionBarCompact').style.width = `${completionPercentage}%`;
+            }, 300);
+        }
+
+        // Render orders table
+        function renderOrdersTable(orders) {
+            const tbody = document.getElementById('ordersTableBody');
+            tbody.innerHTML = '';
+
+            // Show only recent orders (last 5)
+            const recentOrders = orders.slice(-5).reverse();
+
+            recentOrders.forEach(order => {
+                const tr = document.createElement('tr');
+                let salesmanName = '-';
+                if (order.salesman && order.salesman.name) {
+                    salesmanName = order.salesman.name;
+                }
+
+                // Determine status class
+                let statusClass = order.status;
+                if (order.status === 'processing') statusClass = 'processing';
+
+                tr.innerHTML = `
+                    <td>${order.orderId}</td>
+                    <td>${order.customer.name}</td>
+                    <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td>$${order.totalAmount.toFixed(2)}</td>
+                    <td><span class="status ${statusClass}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></td>
+                    <td>${salesmanName}</td>
+                    <td>
+                        <button class="action-btn assign-btn" onclick="openAssignModal('${order.orderId}')">Assign</button>
+                        <button class="action-btn view-btn" onclick="openOrderDetailsModal('${order.orderId}')">View</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Navigate to sales progress page
+        function navigateToSalesProgress() {
+            window.location.href = '/sales_progres.html';
+        }
+
+        // Modal functions
+        function openAssignModal(orderId) {
+            event.stopPropagation();
+            document.getElementById('orderId').textContent = orderId;
+            document.getElementById('assignModal').style.display = 'flex';
+
+            // Populate salesmen dropdown
+            fetch('/api/salesmen')
+                .then(res => res.json())
+                .then(salesmen => {
+                    const select = document.getElementById('salesman');
+                    select.innerHTML = '<option value="">-- Select Salesman --</option>';
+                    salesmen.forEach(s => {
+                        select.innerHTML += `<option value="${s._id}">${s.name}</option>`;
+                    });
+                });
+        }
+
+        function closeAssignModal() {
+            document.getElementById('assignModal').style.display = 'none';
+        }
+
+        function showConfirmAssignModal() {
+            const orderId = document.getElementById('orderId').textContent;
+            const salesmanSelect = document.getElementById('salesman');
+            const salesmanId = salesmanSelect.value;
+            const salesmanName = salesmanSelect.options[salesmanSelect.selectedIndex].text;
+
+            if (!salesmanId) {
+                return;
+            }
+
+            document.getElementById('confirmAssignBody').innerHTML =
+                `Are you sure you want to assign <span style='color:var(--primary-dark);font-weight:600;'>${salesmanName}</span> to order <span style='color:var(--secondary);font-weight:600;'>${orderId}</span>?`;
+
+            document.getElementById('confirmAssignModal').style.display = 'flex';
+        }
+
+        function closeConfirmAssignModal() {
+            document.getElementById('confirmAssignModal').style.display = 'none';
+        }
+
+        function assignSalesman(confirm) {
+            if (!confirm) {
+                showConfirmAssignModal();
+                return;
+            }
+
+            const orderId = document.getElementById('orderId').textContent;
+            const salesmanId = document.getElementById('salesman').value;
+
+            if (!salesmanId) {
+                return;
+            }
+
+            // Find the order by orderId and update it
+            fetch('/api/orders')
+                .then(res => res.json())
+                .then(orders => {
+                    const order = orders.find(o => o.orderId === orderId);
+                    if (!order) {
+                        alert('Order not found');
+                        return;
+                    }
+
+                    // Update order with salesman assignment
+                    fetch(`/api/orders/${order._id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ salesman: salesmanId, status: 'salesman assigned' })
+                    })
+                    .then(res => res.json())
+                    .then(updated => {
+                        alert(`Salesman assigned successfully to order ${orderId}`);
+                        closeAssignModal();
+                        closeConfirmAssignModal();
+                        fetchDashboardData(); // Refresh data
+                    })
+                    .catch(err => {
+                        console.error('Error assigning salesman:', err);
+                        alert('Error assigning salesman');
+                    });
+                })
+                .catch(err => {
+                    console.error('Error fetching orders:', err);
+                    alert('Error fetching orders');
+                });
+        }
+
         function openOrderDetailsModal(orderId) {
+            event.stopPropagation();
+            // Fetch order details
             fetch('/api/orders')
                 .then(res => res.json())
                 .then(orders => {
                     const order = orders.find(o => o.orderId === orderId);
                     if (!order) return;
+
                     let html = `<div><b>Order ID:</b> ${order.orderId}</div>`;
                     html += `<div><b>Customer:</b> ${order.customer.name}</div>`;
                     html += `<div><b>Date:</b> ${new Date(order.createdAt).toLocaleDateString()}</div>`;
@@ -677,185 +960,28 @@
                         html += '<li>No products</li>';
                     }
                     html += '</ul></div>';
+
                     document.getElementById('orderDetailsBody').innerHTML = html;
                     document.getElementById('orderDetailsModal').style.display = 'flex';
+                })
+                .catch(err => {
+                    console.error('Error fetching order details:', err);
                 });
         }
+
         function closeOrderDetailsModal() {
             document.getElementById('orderDetailsModal').style.display = 'none';
         }
-        function showConfirmAssignModal() {
-            const orderId = document.getElementById('orderId').textContent;
-            const salesmanSelect = document.getElementById('salesman');
-            const salesmanId = salesmanSelect.value;
-            const salesmanName = salesmanSelect.options[salesmanSelect.selectedIndex].text;
-            if (!salesmanId) {
-                return;
-            }
-            document.getElementById('confirmAssignBody').innerHTML = `Are you sure you want to assign <span style='color:var(--primary-dark);font-weight:600;'>${salesmanName}</span> to order <span style='color:var(--secondary);font-weight:600;'>${orderId}</span>?`;
-            document.getElementById('confirmAssignModal').style.display = 'flex';
-        }
-        function closeConfirmAssignModal() {
-            document.getElementById('confirmAssignModal').style.display = 'none';
-        }
-        // Modal functions
-        function openAssignModal(orderId) {
-            document.getElementById('orderId').textContent = orderId;
-            document.getElementById('assignModal').style.display = 'flex';
-            // Fetch salesmen from backend and populate dropdown
-            fetch('/api/salesmen')
-                .then(res => res.json())
-                .then(salesmen => {
-                    const select = document.getElementById('salesman');
-                    select.innerHTML = '<option value="">-- Select Salesman --</option>';
-                    salesmen.forEach(s => {
-                        select.innerHTML += `<option value="${s._id}">${s.name}</option>`;
-                    });
-                });
-        }
-        function closeAssignModal() {
-            document.getElementById('assignModal').style.display = 'none';
-        }
-        function assignSalesman(confirm) {
-            const orderId = document.getElementById('orderId').textContent;
-            const salesman = document.getElementById('salesman').value;
-            if (!salesman) {
-                return;
-            }
-            if (!confirm) {
-                showConfirmAssignModal();
-                return;
-            }
-            // Find the order by orderId (from loaded orders)
-            fetch('/api/orders')
-                .then(res => res.json())
-                .then(orders => {
-                    const order = orders.find(o => o.orderId === orderId);
-                    if (!order) {
-                        return;
-                    }
-                    // Update order with salesman assignment
-                    fetch(`/api/orders/${order._id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ salesman, status: 'salesman assigned' })
-                    })
-                    .then(res => res.json())
-                    .then(updated => {
-                        closeAssignModal();
-                        closeConfirmAssignModal();
-                        fetchDashboardData();
-                    });
-                });
-        }
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('assignModal');
-            if (event.target === modal) {
-                closeAssignModal();
-            }
-            // Dropdown close logic
-            const dropdown = document.getElementById('userDropdown');
-            const btn = document.getElementById('userMenuBtn');
-            if (dropdown && btn && !btn.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.style.display = 'none';
-            }
-        };
-        // User dropdown logic (ensure DOM is loaded)
-        document.addEventListener('DOMContentLoaded', function() {
-            var userMenuBtn = document.getElementById('userMenuBtn');
-            var userDropdown = document.getElementById('userDropdown');
-            var logoutBtn = document.getElementById('logoutBtn');
-            if (userMenuBtn && userDropdown) {
-                userMenuBtn.onclick = function(e) {
-                    e.stopPropagation();
-                    userDropdown.style.display = userDropdown.style.display === 'none' || userDropdown.style.display === '' ? 'block' : 'none';
-                };
-            }
-            if (logoutBtn) {
-                logoutBtn.onclick = function() {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('role');
-                    window.location.href = '/Login.html';
-                };
-            }
-        });
-        async function fetchDashboardData() {
-            // Orders
-            const ordersRes = await fetch('/api/orders');
-            const orders = await ordersRes.json();
-            document.getElementById('ordersCount').textContent = orders.length;
-            // Revenue
-            let revenue = 0;
-            orders.forEach(o => revenue += o.totalAmount);
-            document.getElementById('revenueCount').textContent = `$${revenue}`;
-            // Customers
-            const customersRes = await fetch('/api/customers');
-            const customers = await customersRes.json();
-            document.getElementById('customersCount').textContent = customers.length;
-            // Products
-            const productsRes = await fetch('/api/products');
-            const products = await productsRes.json();
-            document.getElementById('productsCount').textContent = products.length;
-            // Render orders table
-            renderOrdersTable(orders);
-        }
-        function renderOrdersTable(orders) {
-            const tbody = document.querySelector('.orders-table tbody');
-            tbody.innerHTML = '';
-            orders.forEach(order => {
-                const tr = document.createElement('tr');
-                let salesmanName = '-';
-                if (order.salesman && order.salesman.name) {
-                    salesmanName = order.salesman.name;
-                }
-                tr.innerHTML = `
-                    <td>${order.orderId}</td>
-                    <td>${order.customer.name}</td>
-                    <td>${new Date(order.createdAt).toLocaleDateString()}</td>
-                    <td>$${order.totalAmount}</td>
-                    <td><span class="status ${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></td>
-                    <td>${salesmanName}</td>
-                    <td>
-                        <button class="action-btn assign-btn" onclick="openAssignModal('${order.orderId}')">Assign</button>
-                        <button class="action-btn view-btn" onclick="openOrderDetailsModal('${order.orderId}')">View</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-        document.addEventListener('DOMContentLoaded', fetchDashboardData);
-        
-        // Dynamic sidebar navigation for SPA experience
+
+        // Navigation function
         function loadPage(page) {
             let url = '';
             if (page === 'dashboard') url = '/admin.html';
-            if (page === 'orders') url = '/orders';
-            if (page === 'sales-progress') url = '/sales_progres';
-            if (page === 'products') url = '/products';
-            if (page === 'customers') url = '/customers';
+            if (page === 'orders') url = '/orders.html';
+            if (page === 'products') url = '/products.html';
+            if (page === 'customers') url = '/customers.html';
             window.location.href = url;
         }
-        document.getElementById('dashboardLink').onclick = function(e) {
-            e.preventDefault();
-            loadPage('dashboard');
-        };
-        document.getElementById('ordersLink').onclick = function(e) {
-            e.preventDefault();
-            loadPage('orders');
-        };
-        document.getElementById('salesProgressLink').onclick = function(e) {
-            e.preventDefault();
-            loadPage('sales-progress');
-        };
-        document.getElementById('productsLink').onclick = function(e) {
-            e.preventDefault();
-            loadPage('products');
-        };
-        document.getElementById('customersLink').onclick = function(e) {
-            e.preventDefault();
-            loadPage('customers');
-        };
 
         // Role-based access control
         const token = localStorage.getItem('token');

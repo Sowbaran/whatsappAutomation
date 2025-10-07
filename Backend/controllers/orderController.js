@@ -75,8 +75,32 @@ exports.createOrder = async (req, res) => {
                 updatedBy: 'E-commerce System'
             }]
         });
-        await order.save();
-        res.status(201).json(order);
+
+        // Save the order first
+        const savedOrder = await order.save();
+
+        // Create or update customer record
+        if (customer && customer.email) {
+            try {
+                const Customer = require('../models/customerModel');
+                await Customer.findOneAndUpdate(
+                    { email: customer.email },
+                    {
+                        name: customer.name,
+                        email: customer.email,
+                        phone: customer.phone,
+                        address: customer.shippingAddress || customer.billingAddress,
+                        status: customer.status || 'regular'
+                    },
+                    { upsert: true, new: true }
+                );
+            } catch (customerErr) {
+                console.error('Error creating/updating customer record:', customerErr);
+                // Don't fail the order creation if customer creation fails
+            }
+        }
+
+        res.status(201).json(savedOrder);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
@@ -96,15 +120,16 @@ exports.updateOrder = async (req, res) => {
         if (req.user && req.user.role === 'salesman') {
             // Salesman can update status of any order, but cannot reassign
             if (updateData.salesman && updateData.salesman !== (order.salesman?.toString() || '')) {
-                return res.status(403).json({ error: 'You cannot reassign orders' });
+                // Instead of rejecting, remove salesman field from updateData to prevent reassignment
+                delete updateData.salesman;
             }
         }
         // Admin can update any order
         if (updateData.status === 'product packages') updateData.status = 'product packaged';
 
-        // If admin assigns salesman and order not picked up, set status to 'salesman assigned' if status not already set
+        // If admin assigns salesman and order not picked up, set status to 'salesman-assigned' if status not already set
         if (updateData.salesman && updateData.salesman !== (order.salesman?.toString() || '') && !order.pickedUp && !updateData.status) {
-            updateData.status = 'salesman assigned';
+            updateData.status = 'salesman-assigned';
         }
 
         // Check if salesman is being assigned
@@ -153,9 +178,83 @@ exports.updateOrder = async (req, res) => {
         };
 
         const updatedOrder = await Order.findByIdAndUpdate(orderId, updateObj, { new: true }).populate('salesman');
+
+        // If customer information was updated, also update the customer record
+        if (updateData.customer && updatedOrder.customer?.email) {
+            try {
+                const Customer = require('../models/customerModel');
+                await Customer.findOneAndUpdate(
+                    { email: updatedOrder.customer.email },
+                    {
+                        name: updatedOrder.customer.name,
+                        email: updatedOrder.customer.email,
+                        phone: updatedOrder.customer.phone,
+                        address: updatedOrder.customer.shippingAddress || updatedOrder.customer.billingAddress,
+                        status: updatedOrder.customer.status || 'regular'
+                    },
+                    { upsert: true, new: true }
+                );
+            } catch (customerErr) {
+                console.error('Error updating customer record:', customerErr);
+                // Don't fail the order update if customer update fails
+            }
+        }
+
         res.json(updatedOrder);
     } catch (err) {
         res.status(400).json({ error: err.message });
+    }
+};
+
+// Assign orders to salesman
+exports.assignOrders = async (req, res) => {
+    try {
+        const { salesmanId, orderIds } = req.body;
+
+        if (!salesmanId || !orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+            return res.status(400).json({ error: 'Salesman ID and order IDs are required' });
+        }
+
+        // Check if salesman exists
+        const Salesman = require('../models/salesmanModel');
+        const salesman = await Salesman.findById(salesmanId);
+        if (!salesman) {
+            return res.status(404).json({ error: 'Salesman not found' });
+        }
+
+        // Update orders
+        const updatePromises = orderIds.map(orderId => {
+            return Order.findByIdAndUpdate(
+                orderId,
+                {
+                    $set: {
+                        salesman: salesmanId,
+                        status: 'salesman-assigned' // Set status if not already
+                    },
+                    $push: {
+                        timeline: {
+                            action: 'Order Assigned to Salesman',
+                            description: `Order assigned to salesman ${salesman.name}`,
+                            date: new Date(),
+                            updatedBy: req.user ? req.user.name : 'Admin'
+                        }
+                    }
+                },
+                { new: true }
+            );
+        });
+
+        const updatedOrders = await Promise.all(updatePromises);
+
+        // Check if any orders were not found
+        const notFound = updatedOrders.filter(order => !order);
+        if (notFound.length > 0) {
+            return res.status(404).json({ error: 'Some orders not found' });
+        }
+
+        res.json({ message: `${orderIds.length} orders assigned to ${salesman.name}`, updatedOrders });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 

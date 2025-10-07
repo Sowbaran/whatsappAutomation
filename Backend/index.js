@@ -110,6 +110,13 @@ app.get("/sales_progres", (req, res) => {
         res.redirect('/login');
     }
 });
+app.get("/order-details", (req, res) => {
+    if (req.user && req.user.role === 'admin') {
+        res.sendFile(path.join(__dirname, "../Frontend/order-details.html"));
+    } else {
+        res.redirect('/login');
+    }
+});
 app.get("/salesman/orders", (req, res) => {
     if (req.user && req.user.role === 'salesman') {
         res.sendFile(path.join(__dirname, "../Frontend/frontend_for_salesman/salesman_orders.html"));
