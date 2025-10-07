@@ -145,9 +145,15 @@ exports.updateOrder = async (req, res) => {
 
         // Check if status is changing
         if (updateData.status && updateData.status !== order.status) {
+            let extraRemark = '';
+            if (updateData.statusChangeReason && updateData.statusChangeReason.trim()) {
+                extraRemark = `Reason: ${updateData.statusChangeReason.trim()}`;
+            } else if (updateData.statusRemarks && updateData.statusRemarks.trim()) {
+                extraRemark = `Remarks: ${updateData.statusRemarks.trim()}`;
+            }
             timelineEntries.push({
                 action: 'Status Changed',
-                description: `Order status changed from '${order.status}' to '${updateData.status}'`,
+                description: `Order status changed from '${order.status}' to '${updateData.status}'${extraRemark ? ' | ' + extraRemark : ''}`,
                 date: new Date(),
                 updatedBy: req.user ? req.user.name : 'System'
             });
@@ -164,9 +170,35 @@ exports.updateOrder = async (req, res) => {
 
         // Add general timeline entry for update if no specific entries
         if (timelineEntries.length === 0) {
+            // Find what fields were updated, but exclude auto-calculated fields
+            const changedFields = [];
+            const excludeFields = ['totalAmount', 'discount', 'shipping', 'tax', 'overallDiscount'];
+            for (const key in updateData) {
+                if (key === 'statusChangeReason' || key === 'statusRemarks' || key === 'statusChangeDescription') continue;
+                if (excludeFields.includes(key)) continue;
+                if (key === 'products' && Array.isArray(updateData.products) && Array.isArray(order.products)) {
+                    // Compare each product field
+                    updateData.products.forEach((prod, idx) => {
+                        const oldProd = order.products[idx] || {};
+                        for (const prodKey in prod) {
+                            if (excludeFields.includes(prodKey)) continue;
+                            if (prod[prodKey] !== oldProd[prodKey]) {
+                                changedFields.push(prodKey);
+                            }
+                        }
+                    });
+                } else if (typeof updateData[key] === 'object' && updateData[key] !== null) {
+                    changedFields.push(key);
+                } else if (order[key] !== updateData[key]) {
+                    changedFields.push(key);
+                }
+            }
+            // Remove duplicates
+            const uniqueFields = [...new Set(changedFields)];
+            let changesText = uniqueFields.length > 0 ? `Fields updated: ${uniqueFields.join(', ')}` : 'No specific fields changed';
             timelineEntries.push({
                 action: 'Order Updated',
-                description: `Order ${order.orderId} was updated`,
+                description: `Order ${order.orderId} was updated. ${changesText}`,
                 date: new Date(),
                 updatedBy: req.user ? req.user.name : 'System'
             });

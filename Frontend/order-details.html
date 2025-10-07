@@ -830,9 +830,9 @@
                     <button class="action-btn print-btn" onclick="window.print()">
                         <i class="fas fa-print"></i> Print
                     </button>
-                    <button class="action-btn back-btn" onclick="window.history.back()">
-                        <i class="fas fa-arrow-left"></i> Back to Orders
-                    </button>
+                                <button class="action-btn back-btn" id="backBtn">
+                                    <i class="fas fa-arrow-left"></i> Back
+                                </button>
                 </div>
             </div>
             
@@ -1924,30 +1924,34 @@
             if (!pendingUpdate) return;
             
             try {
+                let updatePayload = pendingUpdate.data;
+                // If user is salesman, restrict to allowed fields only
+                if (window.userRole === 'salesman') {
+                    const allowedFields = ['status', 'statusChangeReason', 'statusRemarks'];
+                    updatePayload = {};
+                    for (const key of allowedFields) {
+                        if (pendingUpdate.data[key] !== undefined) {
+                            updatePayload[key] = pendingUpdate.data[key];
+                        }
+                    }
+                }
                 const response = await fetch(`/api/orders/${currentOrder._id}`, {
-                    method: 'PUT',
+                    method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify(pendingUpdate.data)
+                    body: JSON.stringify(updatePayload)
                 });
-                
                 if (!response.ok) {
                     const errorText = await response.text();
                     throw new Error(`Failed to update order: ${response.status} ${errorText}`);
                 }
-                
                 const updatedOrder = await response.json();
                 currentOrder = updatedOrder;
                 populateOrderDetails(currentOrder);
-                
-                // Show success notification
                 showSuccessNotification();
-                
-                // Close confirmation modal
                 closeModal('confirmationModal');
-                
             } catch (error) {
                 console.error('Error updating order:', error);
                 alert(error.message);
@@ -1976,8 +1980,21 @@
         // Load order details on page load
         window.addEventListener('DOMContentLoaded', () => {
             setSidebar();
+            setBackButton();
             loadOrderDetails();
         });
+        // Set back button destination based on referrer
+        function setBackButton() {
+            const backBtn = document.getElementById('backBtn');
+            let referrer = document.referrer;
+            if (referrer.includes('sales_progres.html')) {
+                backBtn.innerHTML = '<i class="fas fa-arrow-left"></i> Back to Sales Progress';
+                backBtn.onclick = function() { window.location.href = 'sales_progres.html'; };
+            } else {
+                backBtn.innerHTML = '<i class="fas fa-arrow-left"></i> Back to Orders';
+                backBtn.onclick = function() { window.location.href = 'orders.html'; };
+            }
+        }
     </script>
 </body>
 </html>
