@@ -1,10 +1,9 @@
 const express = require("express");
 const app = express();
-require("dotenv").config();
+require("dotenv").config()
 const path = require("path");
-const cors = require('cors');
-const port = process.env.PORT || 3000;
-const db = require("./confg/dbConnnection");
+const port = process.env.PORT || 5000;
+const db = require("./confg/dbConnnection")
 const userRouter = require("./routes/userRoutes");
 const orderRouter = require("./routes/orderRoutes");
 const productRouter = require("./routes/productRoutes");
@@ -15,21 +14,23 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 // require('./whatsappAutomation/whatsappApi');
 
-// Enable CORS
 db();
+
+// CORS middleware - Add this before other middleware
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-  res.header('Access-Control-Allow-Credentials', true);
-  
-  // Handle preflight
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  
-  next();
+    res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        res.sendStatus(200);
+    } else {
+        next();
+    }
 });
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -166,8 +167,14 @@ app.get("/salesman/login", (req, res) => {
 
 app.use("", dashboardRouter);
 
-
-
+// Health check endpoint for frontend status component
+app.get("/api/health", (req, res) => {
+    res.json({ 
+        status: "ok", 
+        message: "Backend server is running",
+        timestamp: new Date().toISOString()
+    });
+});
 
 app.listen(port,()=>{
     console.log(`App is listening at port ${port}`)
