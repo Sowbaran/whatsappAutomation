@@ -87,40 +87,46 @@ const SalesProgress = () => {
       <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
         {/* Orders Summary */}
         <Card className="overflow-hidden">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm sm:text-base md:text-lg">Orders Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 sm:space-y-4">
-            <div className="grid grid-cols-3 gap-1 sm:gap-2">
-              <div className="flex flex-col items-center p-1.5 sm:p-2 rounded-lg bg-amber-50">
-                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 mb-1" />
-                <p className="text-[10px] sm:text-xs text-muted-foreground text-center">Pending</p>
-                <p className="text-sm sm:text-base font-semibold">{stats.pendingOrders}</p>
-              </div>
-              <div className="flex flex-col items-center p-1.5 sm:p-2 rounded-lg bg-blue-50">
-                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mb-1" />
-                <p className="text-[10px] sm:text-xs text-muted-foreground text-center">In Progress</p>
-                <p className="text-sm sm:text-base font-semibold">{stats.processingOrders}</p>
-              </div>
-              <div className="flex flex-col items-center p-1.5 sm:p-2 rounded-lg bg-emerald-50">
-                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 mb-1" />
-                <p className="text-[10px] sm:text-xs text-muted-foreground text-center">Completed</p>
-                <p className="text-sm sm:text-base font-semibold">{stats.completedOrders}</p>
-              </div>
+          <CardHeader className="pb-1 pt-2">
+          <CardTitle className="text-xs sm:text-sm">Orders Summary</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          <div className="flex flex-wrap items-center gap-7">
+            <div className="flex items-center gap-3">
+              <span className="h-14 w-14 sm:h-12 sm:w-12 md:h-10 md:w-10 rounded-sm bg-amber-100 flex items-center justify-center mr-4 sm:mr-0">
+                <Clock className="h-8 w-8 sm:h-7 sm:w-7 md:h-6 md:w-6 text-amber-700" />
+              </span>
+              <span className="text-2xl sm:text-xl md:text-lg font-semibold text-white">{stats.pendingOrders}</span>
+              <span className="text-base sm:text-sm md:text-xs text-muted-foreground">Pending</span>
             </div>
-            <div className="pt-2 sm:pt-3 border-t">
-              <div className="flex justify-between items-center">
-                <p className="text-xs sm:text-sm text-muted-foreground">Total Orders</p>
-                <p className="text-sm sm:text-base font-semibold">{stats.totalOrders}</p>
-              </div>
-              <div className="mt-1">
-                <Progress value={stats.completionRate} className="h-1.5 sm:h-2" />
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-                  {stats.completionRate}% completion rate
-                </p>
-              </div>
+            <div className="flex items-center gap-3">
+              <span className="h-14 w-14 sm:h-12 sm:w-12 md:h-10 md:w-10 rounded-sm bg-blue-100 flex items-center justify-center mr-4 sm:mr-0">
+                <TrendingUp className="h-8 w-8 sm:h-7 sm:w-7 md:h-6 md:w-6 text-blue-700" />
+              </span>
+              <span className="text-2xl sm:text-xl md:text-lg font-semibold text-white">{stats.processingOrders}</span>
+              <span className="text-base sm:text-sm md:text-xs text-muted-foreground">In Progress</span>
             </div>
-          </CardContent>
+            <div className="flex items-center gap-3">
+              <span className="h-14 w-14 sm:h-12 sm:w-12 md:h-10 md:w-10 rounded-sm bg-emerald-100 flex items-center justify-center mr-4 sm:mr-0">
+                <CheckCircle className="h-8 w-8 sm:h-7 sm:w-7 md:h-6 md:w-6 text-emerald-700" />
+              </span>
+              <span className="text-2xl sm:text-xl md:text-lg font-semibold text-white">{stats.completedOrders}</span>
+              <span className="text-base sm:text-sm md:text-xs text-muted-foreground">Completed</span>
+            </div>
+          </div>
+          <div className="mt-3 pt-3 border-t">
+            <div className="flex justify-between items-center">
+              <p className="text-sm sm:text-base text-muted-foreground">Total</p>
+              <p className="text-lg sm:text-xl font-bold">{stats.totalOrders}</p>
+            </div>
+            <div className="mt-2">
+              <Progress value={stats.completionRate} className="h-2.5" />
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1.5">
+                {stats.completionRate}% completed
+              </p>
+            </div>
+          </div>
+        </CardContent>
         </Card>
 
         {/* Sales Team */}
