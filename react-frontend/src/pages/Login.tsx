@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { type BackendOrder } from '@/lib/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -12,20 +13,22 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Simple demo authentication
-    if (email && password) {
-      toast({
-        title: 'Login Successful',
-        description: 'Welcome to WhatsApp Shop Dashboard',
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
+      if (!res.ok) throw new Error('Invalid credentials');
+      toast({ title: 'Login Successful', description: 'Welcome to WhatsApp Shop Dashboard' });
       navigate('/');
-    } else {
+    } catch (err) {
       toast({
         title: 'Login Failed',
-        description: 'Please enter both email and password',
+        description: 'Invalid email or password',
         variant: 'destructive',
       });
     }
@@ -55,6 +58,7 @@ const Login = () => {
                 placeholder="admin@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 required
               />
             </div>
@@ -68,6 +72,7 @@ const Login = () => {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
                 required
               />
             </div>

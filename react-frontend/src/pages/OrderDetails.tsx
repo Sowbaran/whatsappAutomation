@@ -4,8 +4,8 @@ import { ArrowLeft, MapPin, Phone, Mail, Calendar, DollarSign, Package, User, Ed
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import StatusBadge from "@/components/StatusBadge";
-import { mockOrders } from "@/data/mockOrders";
 import { Order, OrderItem, OrderStatus, PaymentMethod, PaymentStatus } from "@/types/order";
+import { fetchOrderByOrderId, updateOrder } from "@/lib/api";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,17 +15,19 @@ import { Textarea } from "@/components/ui/textarea";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
 const OrderDetails = () => {
-  const { orderId } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [order, setOrder] = useState<Order | undefined>(mockOrders.find((o) => o.id === orderId) || mockOrders[0]);
+  const [order, setOrder] = useState<Order | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [statusDialog, setStatusDialog] = useState(false);
   const [paymentDialog, setPaymentDialog] = useState(false);
   const [productsDialog, setProductsDialog] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; type: "status" | "payment" | "products" }>({ open: false, type: "status" });
   const [isConfirming, setIsConfirming] = useState(false); // Track if we are in a confirmation flow
-  const [statusForm, setStatusForm] = useState({ status: order?.status || 'pending' as OrderStatus, note: "" });
-  const [paymentForm, setPaymentForm] = useState({ paymentStatus: order?.payment.status || 'pending' as PaymentStatus, paymentMethod: order?.payment.method || 'credit_card' as PaymentMethod });
-  const [itemsForm, setItemsForm] = useState<OrderItem[]>(order?.items || []);
+  const [statusForm, setStatusForm] = useState({ status: 'pending' as OrderStatus, note: "" });
+  const [paymentForm, setPaymentForm] = useState({ paymentStatus: 'pending' as PaymentStatus, paymentMethod: 'credit_card' as PaymentMethod });
+  const [itemsForm, setItemsForm] = useState<OrderItem[]>([]);
   
   // State for editable order summary
   const [editableOrder, setEditableOrder] = useState({
@@ -34,6 +36,80 @@ const OrderDetails = () => {
     overallDiscount: order?.discount || 0
   });
   const [isEditingSummary, setIsEditingSummary] = useState(false);
+
+  // Fetch order data from backend
+  useEffect(() => {
+    const fetchOrder = async () => {
+      if (!id) {
+        setError("No order ID provided");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const backendOrder = await fetchOrderByOrderId(id);
+        if (!backendOrder) {
+          setError("Order not found");
+          setLoading(false);
+          return;
+        }
+
+        // Map backend order to frontend order format
+        const mappedOrder: Order = {
+          id: backendOrder._id,
+          orderNumber: backendOrder.orderId || backendOrder._id,
+          customer: {
+            id: backendOrder._id,
+            name: backendOrder.customer?.name || '',
+            email: backendOrder.customer?.email || '',
+            address: backendOrder.customer?.shippingAddress || backendOrder.customer?.billingAddress || '',
+            phone: backendOrder.customer?.phone || '',
+          },
+          date: backendOrder.createdAt || new Date().toISOString(),
+          items: (backendOrder.products || []).map((p, idx) => ({
+            id: String(idx + 1),
+            sku: p.sku || String(idx + 1),
+            name: p.product,
+            price: p.price,
+            quantity: p.quantity,
+            discount: 0,
+          })),
+          subtotal: (backendOrder.products || []).reduce((sum, p) => sum + p.price * p.quantity, 0),
+          tax: 0,
+          shipping: 0,
+          discount: 0,
+          total: backendOrder.totalAmount || 0,
+          salesman: typeof backendOrder.salesman === 'object' && backendOrder.salesman && 'name' in backendOrder.salesman ? (backendOrder.salesman.name as string) : undefined,
+          status: (backendOrder.status as any) || 'pending',
+          payment: {
+            status: (backendOrder.payment?.status as any) || 'pending',
+            method: (backendOrder.payment?.method as any) || 'credit_card',
+            amount: backendOrder.totalAmount || 0,
+            date: backendOrder.createdAt || new Date().toISOString(),
+          },
+          history: (backendOrder.timeline || []).map((t, i) => ({
+            id: `H${i+1}`,
+            date: t.date || new Date().toISOString(),
+            status: (t.action as any) || 'pending',
+            updatedBy: t.updatedBy || 'System',
+            note: t.description || '',
+          })),
+        };
+
+        setOrder(mappedOrder);
+      } catch (err) {
+        console.error("Error fetching order:", err);
+        setError(err instanceof Error ? err.message : 'Failed to load order details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, [id]);
 
   // Update editable order when order changes
   useEffect(() => {
@@ -44,16 +120,49 @@ const OrderDetails = () => {
         overallDiscount: order.discount || 0
       });
       setItemsForm(order.items);
+      setStatusForm({
+        status: order.status || 'pending',
+        note: ""
+      });
+      setPaymentForm({
+        paymentStatus: order.payment?.status || 'pending',
+        paymentMethod: order.payment?.method || 'credit_card'
+      });
     }
   }, [order]);
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <p className="text-muted-foreground">Loading order details...</p>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <Package className="w-16 h-16 text-muted-foreground" />
+        <h2 className="text-2xl font-bold text-foreground">Error Loading Order</h2>
+        <p className="text-muted-foreground">{error}</p>
+        <Button onClick={() => navigate("/orders")} className="mt-4">
+          <ArrowLeft className="w-4 h-4 mr-2" />Back to Orders
+        </Button>
+      </div>
+    );
+  }
+
+  // Show not found state
   if (!order) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <Package className="w-16 h-16 text-muted-foreground" />
         <h2 className="text-2xl font-bold text-foreground">Order Not Found</h2>
         <p className="text-muted-foreground">The order you're looking for doesn't exist.</p>
-        <Button onClick={() => navigate("/")} className="mt-4">
+        <Button onClick={() => navigate("/orders")} className="mt-4">
           <ArrowLeft className="w-4 h-4 mr-2" />Back to Orders
         </Button>
       </div>
@@ -132,55 +241,109 @@ const OrderDetails = () => {
 
   const handleProductsSubmit = () => { 
     if (!order) return;
-    // Recalculate subtotal based on products
-    const subtotal = itemsForm.reduce((sum, p) => sum + (p.price * p.quantity) - (p.discount || 0), 0);
-    const total = subtotal - (order.discount || 0) + (order.tax || 0) + (order.shipping || 0);
-    
-    setOrder(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        items: itemsForm,
-        subtotal,
-        total: total
-      }
-    });
-    
     setProductsDialog(false);
-    setConfirmDialog({ open: false, type: "products" });
-    toast.success("Products updated successfully!");
+    setIsConfirming(true); // Start confirmation flow
+    setConfirmDialog({ open: true, type: "products" });
   };
 
-  const confirmUpdate = () => {
-    const type = confirmDialog.type;
-    if (type === "status") {
-      if (!order) return;
-      const newHistory = [...(order.history || []), { 
-        id: `H${(order.history?.length || 0) + 1}`, 
-        date: new Date().toISOString(), 
-        status: statusForm.status, 
-        updatedBy: "Salesman", 
-        note: statusForm.note,
-      }];
-      setOrder({ ...order, status: statusForm.status, history: newHistory });
-      toast.success("Order status updated successfully!");
-    } else if (type === "payment") {
-      if (!order) return;
-      setOrder({ ...order, 
-        payment: {
-          ...order.payment,
-          status: paymentForm.paymentStatus,
-          method: paymentForm.paymentMethod
-        }
-      });
-      toast.success("Payment information updated successfully!");
-    }
+  const confirmUpdate = async () => {
+    if (!order) return;
     
-    // On success, close all dialogs
-    setConfirmDialog({ open: false, type: confirmDialog.type });
-    setStatusDialog(false);
-    setPaymentDialog(false);
-    setIsConfirming(false); // End confirmation flow
+    const type = confirmDialog.type;
+    try {
+      let updateData: any = {};
+      
+      if (type === "status") {
+        updateData = {
+          status: statusForm.status,
+          statusChangeReason: statusForm.note || `Status changed to ${statusForm.status}`
+        };
+      } else if (type === "payment") {
+        updateData = {
+          payment: {
+            status: paymentForm.paymentStatus,
+            method: paymentForm.paymentMethod
+          }
+        };
+      } else if (type === "products") {
+        // Map frontend items back to backend format
+        updateData = {
+          products: itemsForm.map(item => ({
+            product: item.name,
+            sku: item.sku,
+            price: item.price,
+            quantity: item.quantity
+          }))
+        };
+      }
+
+      // Call backend API to update the order
+      const updatedOrder = await updateOrder(order.id, updateData);
+      
+      // Update local state with the response from backend
+      if (updatedOrder) {
+        const mappedOrder: Order = {
+          id: updatedOrder._id,
+          orderNumber: updatedOrder.orderId || updatedOrder._id,
+          customer: {
+            id: updatedOrder._id,
+            name: updatedOrder.customer?.name || '',
+            email: updatedOrder.customer?.email || '',
+            address: updatedOrder.customer?.shippingAddress || updatedOrder.customer?.billingAddress || '',
+            phone: updatedOrder.customer?.phone || '',
+          },
+          date: updatedOrder.createdAt || new Date().toISOString(),
+          items: (updatedOrder.products || []).map((p, idx) => ({
+            id: String(idx + 1),
+            sku: p.sku || String(idx + 1),
+            name: p.product,
+            price: p.price,
+            quantity: p.quantity,
+            discount: 0,
+          })),
+          subtotal: (updatedOrder.products || []).reduce((sum, p) => sum + p.price * p.quantity, 0),
+          tax: 0,
+          shipping: 0,
+          discount: 0,
+          total: updatedOrder.totalAmount || 0,
+          salesman: typeof updatedOrder.salesman === 'object' && updatedOrder.salesman && 'name' in updatedOrder.salesman ? (updatedOrder.salesman.name as string) : undefined,
+          status: (updatedOrder.status as any) || 'pending',
+          payment: {
+            status: (updatedOrder.payment?.status as any) || 'pending',
+            method: (updatedOrder.payment?.method as any) || 'credit_card',
+            amount: updatedOrder.totalAmount || 0,
+            date: updatedOrder.createdAt || new Date().toISOString(),
+          },
+          history: (updatedOrder.timeline || []).map((t, i) => ({
+            id: `H${i+1}`,
+            date: t.date || new Date().toISOString(),
+            status: (t.action as any) || 'pending',
+            updatedBy: t.updatedBy || 'System',
+            note: t.description || '',
+          })),
+        };
+        
+        setOrder(mappedOrder);
+      }
+      
+      // Show success message
+      const successMessage = type === "status" 
+        ? "Order status updated successfully!" 
+        : type === "payment" 
+          ? "Payment information updated successfully!" 
+          : "Products updated successfully!";
+      toast.success(successMessage);
+      
+    } catch (error) {
+      console.error("Error updating order:", error);
+      toast.error("Failed to update order. Please try again.");
+    } finally {
+      // Close all dialogs
+      setConfirmDialog({ open: false, type: confirmDialog.type });
+      setStatusDialog(false);
+      setPaymentDialog(false);
+      setIsConfirming(false);
+    }
   };
 
   const updateItem = (index: number, field: keyof OrderItem, value: any) => {

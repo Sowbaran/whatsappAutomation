@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Search, Eye, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import StatusBadge from "@/components/StatusBadge";
-import { mockOrders } from "@/data/mockOrders";
 import { Order } from "@/types/order";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -14,15 +13,31 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAssignedOrders, type BackendOrder } from "@/lib/api";
 
 type StatusFilter = Order["status"] | "all";
 
 const AssignedOrders = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [orders] = useState<Order[]>(
-    mockOrders.filter((order) => order.salesman === "Michael Johnson")
-  );
+  const { data, isLoading, isError } = useQuery({ queryKey: ["salesman","assigned-orders"], queryFn: fetchAssignedOrders });
+  const orders = useMemo(() => {
+    const list = (data || []) as BackendOrder[];
+    return list.map((o) => ({
+      id: o._id,
+      customerName: o.customer?.name || "",
+      customerPhone: o.customer?.phone || "",
+      customerEmail: o.customer?.email || "",
+      customerAddress: o.customer?.shippingAddress || o.customer?.billingAddress || "",
+      products: (o.products || []).map((p, idx) => ({ id: String(idx+1), name: p.product, quantity: p.quantity, price: p.price })),
+      totalAmount: o.totalAmount || 0,
+      status: (o.status?.toLowerCase() as Order["status"]) || "pending",
+      paymentStatus: ((o.payment?.status || "unpaid").toLowerCase() as Order["paymentStatus"]),
+      orderDate: o.createdAt || new Date().toISOString(),
+      salesman: typeof o.salesman === 'object' && o.salesman && 'name' in o.salesman ? (o.salesman as any).name : undefined,
+    } as Order));
+  }, [data]);
   const navigate = useNavigate();
 
   const filteredOrders = orders.filter((order) => {
@@ -90,7 +105,9 @@ const AssignedOrders = () => {
 
         {/* Mobile View */}
         <div className="block md:hidden">
-          {filteredOrders.map((order) => (
+          {isLoading && <div className="p-4 text-sm text-muted-foreground">Loading...</div>}
+          {isError && <div className="p-4 text-sm text-red-600">Failed to load orders</div>}
+          {!isLoading && !isError && filteredOrders.map((order) => (
             <div
               key={order.id}
               className="p-4 border-b border-border hover:bg-muted/50 transition-colors"
@@ -153,7 +170,13 @@ const AssignedOrders = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filteredOrders.map((order) => (
+              {isLoading && (
+                <tr><td className="px-6 py-4 text-sm text-muted-foreground" colSpan={6}>Loading...</td></tr>
+              )}
+              {isError && (
+                <tr><td className="px-6 py-4 text-sm text-red-600" colSpan={6}>Failed to load orders</td></tr>
+              )}
+              {!isLoading && !isError && filteredOrders.map((order) => (
                 <tr
                   key={order.id}
                   className="hover:bg-muted/50 transition-colors"

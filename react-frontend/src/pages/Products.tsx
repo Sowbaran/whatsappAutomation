@@ -1,17 +1,19 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Search, Package } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { mockProducts } from '@/lib/mockData';
+import { StatusBadge, type StatusType } from '@/components/ui/status-badge';
+import { useQuery } from '@tanstack/react-query';
+import { fetchProducts, type BackendProduct } from '@/lib/api';
 
 const Products = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const { data } = useQuery({ queryKey: ['products'], queryFn: fetchProducts });
+  const products = (data || []) as BackendProduct[];
 
-  const filteredProducts = mockProducts.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [products, searchTerm]);
 
   return (
     <div className="space-y-6">
@@ -48,7 +50,7 @@ const Products = () => {
               </thead>
               <tbody>
                 {filteredProducts.map((product) => (
-                  <tr key={product.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                  <tr key={product._id} className="border-b border-border hover:bg-muted/50 transition-colors">
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
@@ -56,15 +58,11 @@ const Products = () => {
                         </div>
                         <div>
                           <p className="font-semibold">{product.name}</p>
-                          <p className="text-sm text-muted-foreground">ID: {product.id}</p>
+                          <p className="text-sm text-muted-foreground">ID: {product._id}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-secondary/10 text-secondary">
-                        {product.category}
-                      </span>
-                    </td>
+                    <td className="py-4 px-4">-</td>
                     <td className="py-4 px-4 font-semibold">${product.price.toFixed(2)}</td>
                     <td className="py-4 px-4">
                       <span className={`font-medium ${product.stock < 50 ? 'text-warning' : 'text-success'}`}>
@@ -72,7 +70,7 @@ const Products = () => {
                       </span>
                     </td>
                     <td className="py-4 px-4">
-                      <StatusBadge status={product.status} />
+                      <StatusBadge status={(product.stock > 0 ? 'active' : 'inactive') as StatusType} />
                     </td>
                   </tr>
                 ))}

@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { mockSalesmen } from '@/lib/mockData';
 import { toast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import { fetchSalesmen, type BackendSalesman } from '@/lib/api';
 
 interface AssignSalesmanDialogProps {
   open: boolean;
@@ -27,21 +28,30 @@ export function AssignSalesmanDialog({
 }: AssignSalesmanDialogProps) {
   const [selectedSalesman, setSelectedSalesman] = useState<number | null>(null);
 
-  // Show all salesmen, even if already assigned
-  const availableSalesmen = mockSalesmen;
+  // Load salesmen from backend
+  const { data } = useQuery({ queryKey: ['salesmen'], queryFn: fetchSalesmen });
+  const availableSalesmen = (data || []).map((s: BackendSalesman, idx: number) => ({
+    id: idx + 1,
+    name: s.name,
+    email: s.email || '',
+    activeOrders: s.activeOrders || 0,
+    totalSales: s.totalSales || 0,
+    avatar: '/placeholder.svg',
+  }));
 
   // Reset selection when dialog is opened/closed
   useEffect(() => {
     if (open) {
       // Pre-select current salesman if exists
       if (currentSalesman) {
-        const current = mockSalesmen.find(s => s.name === currentSalesman);
+        const current = availableSalesmen.find(s => s.name === currentSalesman);
         setSelectedSalesman(current?.id || null);
       } else {
         setSelectedSalesman(null);
       }
     }
-  }, [open, currentSalesman]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, currentSalesman, data]);
 
   const handleAssign = () => {
     if (!selectedSalesman) {
@@ -53,7 +63,7 @@ export function AssignSalesmanDialog({
       return;
     }
 
-    const salesman = mockSalesmen.find(s => s.id === selectedSalesman);
+    const salesman = availableSalesmen.find(s => s.id === selectedSalesman);
     if (salesman) {
       onAssign(salesman.id, salesman.name);
       onOpenChange(false);

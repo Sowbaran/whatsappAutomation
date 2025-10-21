@@ -1,16 +1,28 @@
 import { DollarSign, Users, ShoppingCart, Package, Eye } from 'lucide-react';
 import { StatCard } from '@/components/ui/stat-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { mockOrders } from '@/lib/mockData';
-import { Link, useNavigate } from 'react-router-dom';
+import { StatusBadge, type StatusType } from '@/components/ui/status-badge';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useQuery } from '@tanstack/react-query';
+import { fetchOrders, type BackendOrder } from '@/lib/api';
+
+const mapStatus = (s?: string): StatusType => {
+  if (!s) return 'pending';
+  const v = s.toLowerCase();
+  if (v === 'completed' || v === 'delivered') return 'completed';
+  if (v === 'cancelled' || v === 'canceled') return 'cancelled';
+  if (['processing','picked up','picked-up','salesman-assigned','shipped','in_progress'].includes(v)) return 'processing';
+  return 'pending';
+};
 
 const Dashboard = () => {
-  const totalRevenue = mockOrders.reduce((sum, order) => sum + order.total, 0);
-  const totalCustomers = new Set(mockOrders.map(o => o.customer.email)).size;
-  const totalOrders = mockOrders.length;
-  const totalProducts = 156;
+  const { data } = useQuery({ queryKey: ['orders'], queryFn: fetchOrders });
+  const orders = (data || []) as BackendOrder[];
+  const totalRevenue = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+  const totalCustomers = new Set(orders.map(o => o.customer?.email).filter(Boolean)).size;
+  const totalOrders = orders.length;
+  const totalProducts = 0;
 
   return (
     <div className="space-y-6">
@@ -68,23 +80,23 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {mockOrders.map((order) => (
-                  <tr key={order.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className="py-4 px-4 font-medium">{order.id}</td>
+                {orders.map((o) => (
+                  <tr key={o._id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                    <td className="py-4 px-4 font-medium">{o.orderId}</td>
                     <td className="py-4 px-4">
                       <div>
-                        <p className="font-medium">{order.customer.name}</p>
-                        <p className="text-sm text-muted-foreground">{order.customer.email}</p>
+                        <p className="font-medium">{o.customer?.name}</p>
+                        <p className="text-sm text-muted-foreground">{o.customer?.email}</p>
                       </div>
                     </td>
-                    <td className="py-4 px-4 text-sm">{order.date}</td>
-                    <td className="py-4 px-4 font-semibold">${order.total.toFixed(2)}</td>
+                    <td className="py-4 px-4 text-sm">{o.createdAt ? new Date(o.createdAt).toISOString().slice(0,10) : ''}</td>
+                    <td className="py-4 px-4 font-semibold">${(o.totalAmount || 0).toFixed(2)}</td>
                     <td className="py-4 px-4">
-                      <StatusBadge status={order.status} />
+                      <StatusBadge status={mapStatus(o.status)} />
                     </td>
                     <td className="py-4 px-4">
                       <Link 
-                        to={`/orders/${order.id}`}
+                        to={`/orders/${o.orderId}`}
                         state={{ from: 'dashboard' }}
                       >
                         <Button variant="ghost" size="sm">

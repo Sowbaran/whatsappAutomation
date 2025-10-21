@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Eye, User, X, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { mockOrders, mockSalesmen } from '@/lib/mockData';
+import { StatusBadge, type StatusType } from '@/components/ui/status-badge';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { AssignSalesmanDialog } from '@/components/orders/AssignSalesmanDialog';
@@ -11,6 +10,18 @@ import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { motion, Variants } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useQuery } from '@tanstack/react-query';
+import { fetchOrders, fetchSalesmen, assignOrderToSalesman, unassignOrderFromSalesman, type BackendOrder, type BackendSalesman } from '@/lib/api';
+
+const mapStatus = (s?: string): StatusType => {
+  if (!s) return 'pending';
+  const v = s.toLowerCase();
+  if (v === 'completed' || v === 'delivered') return 'completed';
+  if (v === 'cancelled' || v === 'canceled') return 'cancelled';
+  if (v === 'active' || v === 'inactive') return v as StatusType;
+  if (['processing','picked up','picked-up','salesman-assigned','shipped','in_progress'].includes(v)) return 'processing';
+  return 'pending';
+};
 
 const buttonVariants: Variants = {
   hover: {
@@ -32,13 +43,59 @@ const Orders = () => {
   const [unassignDialogOpen, setUnassignDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<{id: string, currentSalesman: string | null} | null>(null);
   const [orderToUnassign, setOrderToUnassign] = useState<{id: string, salesmanName: string} | null>(null);
-  const [orders, setOrders] = useState(mockOrders);
+  const [orders, setOrders] = useState(() => [] as Array<{
+    id: string; // Mongo _id for routing
+    orderNumber?: string; // human-friendly orderId
+    customer: { name: string; email?: string; address?: string; phone?: string };
+    date: string;
+    items: Array<{ id: string; name: string; price: number; quantity: number; discount?: number }>;
+    total: number;
+    salesman: string | null;
+    status: StatusType;
+  }>);
   const [hoveredOrder, setHoveredOrder] = useState<string | null>(null);
 
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['orders'],
+    queryFn: fetchOrders,
+  });
+
+  const { data: salesmenData } = useQuery({
+    queryKey: ['salesmen'],
+    queryFn: fetchSalesmen,
+  });
+
+  useEffect(() => {
+    if (data && Array.isArray(data)) {
+      const mapped = (data as BackendOrder[]).map((o) => ({
+        id: (o as any)._id, // use Mongo _id for routing
+        orderNumber: o.orderId || (o as any)._id, // display-friendly
+        customer: {
+          name: o.customer?.name || 'Unknown',
+          email: o.customer?.email,
+          address: o.customer?.shippingAddress || o.customer?.billingAddress,
+          phone: o.customer?.phone,
+        },
+        date: o.createdAt ? new Date(o.createdAt).toISOString().slice(0, 10) : '',
+        items: (o.products || []).map((p, idx) => ({
+          id: String(idx + 1),
+          name: p.product,
+          price: p.price,
+          quantity: p.quantity,
+          discount: 0,
+        })),
+        total: o.totalAmount,
+        salesman: typeof o.salesman === 'object' && o.salesman && 'name' in o.salesman ? (o.salesman.name as string) : null,
+        status: mapStatus(o.status),
+      }));
+      setOrders(mapped);
+    }
+  }, [data]);
+
   const filteredOrders = orders.filter(order =>
-    order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.customer.email.toLowerCase().includes(searchTerm.toLowerCase())
+    ((order.orderNumber || order.id || '') as string).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (order.customer.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (order.customer.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getAssignedSalesmen = (currentOrderId: string) => {
@@ -56,43 +113,84 @@ const Orders = () => {
     setAssignDialogOpen(true);
   };
 
-  const handleAssignSalesman = (salesmanId: number, salesmanName: string) => {
+  const handleAssignSalesman = async (salesmanId: number, salesmanName: string) => {
     if (!selectedOrder) return;
     
-    setOrders(prevOrders => 
-      prevOrders.map(order => 
-        order.id === selectedOrder.id 
-          ? { ...order, salesman: salesmanName } 
-          : order
-      )
-    );
-    
-    toast({
-      title: 'Salesman Assigned',
-      description: `${salesmanName} has been assigned to order #${selectedOrder.id}`
-    });
-    
-    setAssignDialogOpen(false);
+    try {
+      // Get salesmen data from the existing query
+      const salesmen = (salesmenData || []) as BackendSalesman[];
+      const salesman = salesmen.find(s => s.name === salesmanName);
+      
+      if (!salesman) {
+        toast({
+          title: 'Error',
+          description: 'Salesman not found',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Call backend API to assign salesman
+      await assignOrderToSalesman(selectedOrder.id, salesman._id);
+      
+      // Update local state
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === selectedOrder.id 
+            ? { ...order, salesman: salesmanName } 
+            : order
+        )
+      );
+      
+      toast({
+        title: 'Salesman Assigned',
+        description: `${salesmanName} has been assigned to order #${selectedOrder.id}`
+      });
+      
+    } catch (error) {
+      console.error('Error assigning salesman:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to assign salesman. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setAssignDialogOpen(false);
+    }
   };
 
-  const handleUnassignSalesman = () => {
+  const handleUnassignSalesman = async () => {
     if (!orderToUnassign) return;
     
-    setOrders(prevOrders => 
-      prevOrders.map(order => 
-        order.id === orderToUnassign.id 
-          ? { ...order, salesman: null } 
-          : order
-      )
-    );
-    
-    toast({
-      title: 'Salesman Unassigned',
-      description: `${orderToUnassign.salesmanName} has been unassigned from order #${orderToUnassign.id}`
-    });
-    
-    setUnassignDialogOpen(false);
-    setOrderToUnassign(null);
+    try {
+      // Call backend API to unassign salesman
+      await unassignOrderFromSalesman(orderToUnassign.id);
+      
+      // Update local state
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderToUnassign.id 
+            ? { ...order, salesman: null } 
+            : order
+        )
+      );
+      
+      toast({
+        title: 'Salesman Unassigned',
+        description: `${orderToUnassign.salesmanName} has been unassigned from order #${orderToUnassign.id}`
+      });
+      
+    } catch (error) {
+      console.error('Error unassigning salesman:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to unassign salesman. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUnassignDialogOpen(false);
+      setOrderToUnassign(null);
+    }
   };
 
   return (
@@ -122,6 +220,12 @@ const Orders = () => {
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
+            {isLoading && (
+              <div className="p-4 text-sm text-muted-foreground">Loading orders...</div>
+            )}
+            {isError && (
+              <div className="p-4 text-sm text-red-600">Failed to load orders.</div>
+            )}
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/10">
@@ -144,7 +248,7 @@ const Orders = () => {
                     onMouseLeave={() => setHoveredOrder(null)}
                   >
                     <td className="py-4 px-4 font-medium">
-                      <span className="font-mono text-sm bg-muted/10 px-2 py-1 rounded">{order.id}</span>
+                      <span className="font-mono text-sm bg-muted/10 px-2 py-1 rounded">{order.orderNumber || order.id}</span>
                     </td>
                     <td className="py-4 px-4">
                       <div>
@@ -188,7 +292,7 @@ const Orders = () => {
                           whileTap="tap"
                           variants={buttonVariants}
                         >
-                          <Link to={`/orders/${order.id}`}>
+                          <Link to={`/orders/${order.orderNumber || order.id}`}>
                             <Button 
                               variant="ghost" 
                               size="sm" 
@@ -202,7 +306,8 @@ const Orders = () => {
                               <span>View</span>
                             </Button>
                           </Link>
-                        </motion.div>
+                        </motion.div
+>
                         <motion.div
                           whileHover="hover"
                           whileTap="tap"

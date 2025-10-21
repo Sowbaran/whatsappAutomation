@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Search, Eye, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import StatusBadge from "@/components/StatusBadge";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { mockOrders } from "@/data/mockOrders";
 import { Order } from "@/types/order";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -15,10 +14,29 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchAssignedOrders, pickupOrder, dropOrder, type BackendOrder } from "@/lib/api";
 
 const Orders = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const queryClient = useQueryClient();
+  const { data, isLoading, isError } = useQuery({ queryKey: ["salesman","assigned-orders"], queryFn: fetchAssignedOrders });
+  const orders = useMemo(() => {
+    const list = (data || []) as BackendOrder[];
+    return list.map((o) => ({
+      id: o._id, // use Mongo _id for actions; show orderId in UI
+      customerName: o.customer?.name || "",
+      customerPhone: o.customer?.phone || "",
+      customerEmail: o.customer?.email || "",
+      customerAddress: o.customer?.shippingAddress || o.customer?.billingAddress || "",
+      products: (o.products || []).map((p, idx) => ({ id: String(idx+1), name: p.product, quantity: p.quantity, price: p.price })),
+      totalAmount: o.totalAmount || 0,
+      status: (o.status?.toLowerCase() as Order["status"]) || "pending",
+      paymentStatus: ((o.payment?.status || "unpaid").toLowerCase() as Order["paymentStatus"]),
+      orderDate: o.createdAt || new Date().toISOString(),
+      salesman: typeof o.salesman === 'object' && o.salesman && 'name' in o.salesman ? (o.salesman as any).name : undefined,
+    } as Order));
+  }, [data]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
@@ -43,25 +61,29 @@ const Orders = () => {
     setConfirmDialog({ open: true, orderId, action: "drop" });
   };
 
+  const pickupMut = useMutation({
+    mutationFn: (id: string) => pickupOrder(id),
+    onSuccess: () => {
+      toast.success("Order picked up successfully!");
+      queryClient.invalidateQueries({ queryKey: ["salesman","assigned-orders"] });
+      setConfirmDialog({ open: false, orderId: "", action: "pickup" });
+    },
+    onError: () => toast.error("Failed to pickup order"),
+  });
+  const dropMut = useMutation({
+    mutationFn: (id: string) => dropOrder(id),
+    onSuccess: () => {
+      toast.success("Order dropped. Available for re-pickup.");
+      queryClient.invalidateQueries({ queryKey: ["salesman","assigned-orders"] });
+      setConfirmDialog({ open: false, orderId: "", action: "pickup" });
+    },
+    onError: () => toast.error("Failed to drop order"),
+  });
   const confirmAction = () => {
     const { orderId, action } = confirmDialog;
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === orderId
-          ? {
-              ...order,
-              status: action === "pickup" ? "picked-up" : "pending",
-              salesman: action === "pickup" ? "Michael Johnson" : undefined,
-            }
-          : order
-      )
-    );
-    toast.success(
-      action === "pickup"
-        ? "Order picked up successfully!"
-        : "Order dropped. Available for re-pickup."
-    );
-    setConfirmDialog({ open: false, orderId: "", action: "pickup" });
+    if (!orderId) return;
+    if (action === "pickup") pickupMut.mutate(orderId);
+    else dropMut.mutate(orderId);
   };
 
   const showDetails = (order: Order) => {
@@ -69,8 +91,8 @@ const Orders = () => {
     setDetailsDialog(true);
   };
 
-  const viewDetails = (orderId: string) => {
-    navigate(`/order/${orderId}`);
+  const viewDetails = (orderMongoId: string) => {
+    navigate(`/order/${orderMongoId}`);
   };
 
   return (
@@ -96,7 +118,9 @@ const Orders = () => {
 
         {/* Mobile View */}
         <div className="block md:hidden">
-          {filteredOrders.map((order) => (
+          {isLoading && <div className="p-4 text-sm text-muted-foreground">Loading...</div>}
+          {isError && <div className="p-4 text-sm text-red-600">Failed to load orders</div>}
+          {!isLoading && !isError && filteredOrders.map((order) => (
             <div
               key={order.id}
               className="p-4 border-b border-border hover:bg-muted/50 transition-colors"

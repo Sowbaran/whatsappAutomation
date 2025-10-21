@@ -41,7 +41,8 @@ const user = async(req,res) =>{
     });
     console.log("USER CONTROLLER: ",token)
 
-    res.cookie('token', token, { httpOnly: true, secure: true });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('token', token, { httpOnly: true, secure: isProd });
     if(user.role === 'salesman'){
         return res.json({
             message: "Login successful",
@@ -62,7 +63,7 @@ const user = async(req,res) =>{
 
 const logout = (req, res) => {
     res.clearCookie('token');
-    res.status(200).json({ message: "Logout successful" });
+    return res.redirect('/login');
 };
 
 module.exports = { user, logout };

@@ -14,8 +14,13 @@ exports.getAllOrders = async (req, res) => {
 
 exports.getOrderByOrderId = async (req, res) => {
     try {
-        const order = await Order.findOne({ orderId: req.params.orderId })
+        const key = (req.params.orderId || '').trim();
+        let order = await Order.findOne({ orderId: key })
             .populate({ path: 'salesman', model: 'Salesman' });
+        // Fallback: if param looks like an ObjectId, try by _id
+        if (!order && mongoose.Types.ObjectId.isValid(key)) {
+            order = await Order.findById(key).populate({ path: 'salesman', model: 'Salesman' });
+        }
         if (!order) return res.status(404).json({ error: 'Order not found' });
         res.json(order);
     } catch (err) {
@@ -23,14 +28,17 @@ exports.getOrderByOrderId = async (req, res) => {
     }
 };
 
-// Get order by MongoDB _id
-exports.getOrderById = async (req, res) => {
+// Get order by MongoDB _id or by orderId
+exports.getOrderByIdOrOrderId = async (req, res) => {
     try {
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            return res.status(404).json({ error: 'Invalid order ID format' });
+        const { id } = req.params;
+        let order = null;
+        if (mongoose.Types.ObjectId.isValid(id)) {
+            order = await Order.findById(id).populate({ path: 'salesman', model: 'Salesman' });
         }
-        const order = await Order.findById(req.params.id)
-            .populate({ path: 'salesman', model: 'Salesman' });
+        if (!order) {
+            order = await Order.findOne({ orderId: id }).populate({ path: 'salesman', model: 'Salesman' });
+        }
         if (!order) return res.status(404).json({ error: 'Order not found' });
         res.json(order);
     } catch (err) {

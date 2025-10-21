@@ -1,15 +1,43 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import CustomerDialog from '@/components/CustomerDialog';
 import { Search, Mail, Phone } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { mockCustomers, mockOrders } from '@/lib/mockData';
+import { useQuery } from '@tanstack/react-query';
+import { fetchCustomers, fetchOrders, type BackendCustomer, type BackendOrder } from '@/lib/api';
 
 const Customers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [customers, setCustomers] = useState(mockCustomers);
+  const { data: customersData } = useQuery({ queryKey: ['customers'], queryFn: fetchCustomers });
+  const { data: ordersData } = useQuery({ queryKey: ['orders'], queryFn: fetchOrders });
+  const [customers, setCustomers] = useState(() => [] as Array<any>);
+
+  const orders = (ordersData || []) as BackendOrder[];
+  const mappedCustomers = useMemo(() => {
+    const cs = (customersData || []) as BackendCustomer[];
+    return cs.map((c, idx) => {
+      const relatedOrders = orders.filter(o => o.customer?.email && c.email && o.customer.email === c.email);
+      const totalSpent = relatedOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+      return {
+        id: c._id || idx + 1,
+        name: c.name,
+        email: c.email,
+        phone: c.phone || '',
+        orders: relatedOrders.length,
+        totalSpent,
+        joinedDate: c.createdAt ? new Date(c.createdAt).toISOString().slice(0,10) : '',
+      };
+    });
+  }, [customersData, orders]);
+
+  // initialize local state once data arrives
+  if (customers.length === 0 && mappedCustomers.length > 0) {
+    // Not using useEffect to keep minimal changes and avoid extra imports
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    setCustomers(mappedCustomers);
+  }
 
   const filteredCustomers = customers.filter(customer =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -100,7 +128,15 @@ const Customers = () => {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           customer={selectedCustomer}
-          orders={mockOrders}
+          orders={(orders || []).map(o => ({
+            customer: {
+              email: o.customer?.email || '',
+              name: o.customer?.name || '',
+              phone: o.customer?.phone || '',
+            },
+            total: o.totalAmount || 0,
+            payment: { status: o.payment?.status || 'unpaid', method: o.payment?.method || '-' }
+          }))}
           onSave={(updatedCustomer) => {
             setCustomers((prev) =>
               prev.map((c) => (c.id === updatedCustomer.id ? updatedCustomer : c))

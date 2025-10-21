@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 require("dotenv").config()
 const path = require("path");
+const fs = require("fs");
 const port = process.env.PORT || 5000;
 const db = require("./confg/dbConnnection")
 const userRouter = require("./routes/userRoutes");
@@ -18,17 +19,23 @@ db();
 
 // CORS middleware - Add this before other middleware
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+    const origin = req.headers.origin;
+    const allowedOrigins = new Set([
+        'http://localhost:3000',
+        'http://localhost:8080',
+        'http://127.0.0.1:8080'
+    ]);
+    if (origin && allowedOrigins.has(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+    }
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
     res.header('Access-Control-Allow-Credentials', 'true');
-    
-    // Handle preflight requests
+
     if (req.method === 'OPTIONS') {
-        res.sendStatus(200);
-    } else {
-        next();
+        return res.sendStatus(200);
     }
+    next();
 });
 
 app.use(express.json());
@@ -39,46 +46,52 @@ app.use('/images', express.static('./whatsappAutomation'));
 
 app.use((req, res, next) => {
     const token = req.cookies.token;
-    // console.log("INDEX JS:",token)
     if (token) {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
             req.user = decoded;
         } catch (err) {
-            // Invalid token, proceed as a guest
         }
     }
     next();
 });
 
-// Serve static files: restrict salesmen to their folder only
+// Paths to built React apps
+const adminDist = path.join(__dirname, "../react-frontend/dist");
+const salesmanDist = path.join(__dirname, "../react-frontend/react-frontend-salesman/dist");
+console.log("[SPA Paths] adminDist=", adminDist);
+console.log("[SPA Paths] salesmanDist=", salesmanDist);
+
+// Static assets: try admin build first, then salesman build
+// This avoids a mismatch where /login serves admin index.html but asset requests
+// get routed to the salesman static dir by role, causing HTML fallback and MIME errors.
 app.use((req, res, next) => {
-    if (req.user && req.user.role === 'salesman') {
-        // Only allow static files from frontend_for_salesman
-        express.static(path.join(__dirname, "../Frontend/frontend_for_salesman"))(req, res, next);
-    } else {
-        // Admins and others get full frontend
-        express.static(path.join(__dirname, "../Frontend"))(req, res, next);
-    }
+    if (req.path.startsWith('/api/')) return next();
+    return express.static(adminDist)(req, res, (err) => {
+        if (err) return next(err);
+        return express.static(salesmanDist)(req, res, next);
+    });
 });
 
-// Block direct access to admin pages for salesmen
-app.use((req, res, next) => {
-    if (req.user && req.user.role === 'salesman') {
-        // If trying to access any page outside frontend_for_salesman, redirect
-        const allowed = [
-            '/salesman/orders',
-            '/salesman/profile',
-            '/salesman/assigned-orders',
-            '/login',
-            '/api/login',
-            '/api/logout'
-        ];
-        if (!allowed.includes(req.path) && !req.path.startsWith('/api/')) {
-            return res.redirect('/salesman/assigned-orders');
-        }
+// Favicon: avoid noisy 404
+app.get('/favicon.ico', (_req, res) => res.sendStatus(204));
+
+// SPA entry for login should always serve admin app
+app.get('/login', (req, res) => {
+    const adminIndex = path.join(adminDist, 'index.html');
+    if (!fs.existsSync(adminIndex)) {
+        return res.status(500).send('Admin build not found. Please run npm run build in react-frontend.');
     }
-    next();
+    return res.sendFile(adminIndex);
+});
+
+// Explicit SPA routes for Orders pages to support direct navigation
+app.get(['/orders', '/orders/:id'], (req, res) => {
+    const adminIndex = path.join(adminDist, 'index.html');
+    if (!fs.existsSync(adminIndex)) {
+        return res.status(500).send('Admin build not found. Please run npm run build in react-frontend.');
+    }
+    return res.sendFile(adminIndex);
 });
 
 app.use("/api", userRouter);
@@ -88,78 +101,23 @@ app.use("/api/orders", orderRouter);
 app.use("/api/products", productRouter);
 app.use("/api/customers", customerRouter);
 
-// Serve static files from Frontend folder
+// SPA fallback for all non-API routes (Express 5 compatible)
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
+    // Prefer salesman app only if salesman and build exists
+    if (req.user && req.user.role === 'salesman') {
+        const salesmanIndex = path.join(salesmanDist, 'index.html');
+        if (fs.existsSync(salesmanIndex)) {
+            return res.sendFile(salesmanIndex);
+        }
+    }
+    const adminIndex = path.join(adminDist, 'index.html');
+    if (!fs.existsSync(adminIndex)) {
+        return res.status(500).send('Admin build not found. Please run npm run build in react-frontend.');
+    }
+    return res.sendFile(adminIndex);
+});
 
-// Redirect routes to HTML pages with role checks
-app.get("/products", (req, res) => {
-    if (req.user && req.user.role === 'admin') {
-        res.sendFile(path.join(__dirname, "../Frontend/products.html"));
-    } else {
-        res.redirect('/login');
-    }
-});
-app.get("/customers", (req, res) => {
-    if (req.user && req.user.role === 'admin') {
-        res.sendFile(path.join(__dirname, "../Frontend/customers.html"));
-    } else {
-        res.redirect('/login');
-    }
-});
-app.get("/orders", (req, res) => {
-    if (req.user && req.user.role === 'admin') {
-        res.sendFile(path.join(__dirname, "../Frontend/orders.html"));
-    } else {
-        res.redirect('/login');
-    }
-});
-app.get("/admin", (req, res) => {
-    if (req.user && req.user.role === 'admin') {
-        res.sendFile(path.join(__dirname, "../Frontend/admin.html"));
-    } else {
-        res.redirect('/login');
-    }
-});
-app.get("/sales_progres", (req, res) => {
-    if (req.user && req.user.role === 'admin') {
-        res.sendFile(path.join(__dirname, "../Frontend/sales_progres.html"));
-    } else {
-        res.redirect('/login');
-    }
-});
-app.get("/order-details", (req, res) => {
-    if (req.user && req.user.role === 'admin') {
-        res.sendFile(path.join(__dirname, "../Frontend/order-details.html"));
-    } else {
-        res.redirect('/login');
-    }
-});
-app.get("/salesman/orders", (req, res) => {
-    if (req.user && req.user.role === 'salesman') {
-        res.sendFile(path.join(__dirname, "../Frontend/frontend_for_salesman/salesman_orders.html"));
-    } else {
-        res.redirect('/login');
-    }
-});
-app.get("/salesman/profile", (req, res) => {
-    if (req.user && req.user.role === 'salesman') {
-        res.sendFile(path.join(__dirname, "../Frontend/frontend_for_salesman/profile.html"));
-    } else {
-        res.redirect('/login');
-    }
-});
-app.get("/salesman/assigned-orders", (req, res) => {
-    if (req.user && req.user.role === 'salesman') {
-        res.sendFile(path.join(__dirname, "../Frontend/frontend_for_salesman/asignedOrder.html"));
-    } else {
-        res.redirect('/login');
-    }
-});
-app.get("/login", (req, res) => {
-    res.sendFile(path.join(__dirname, "../Frontend/Login.html"));
-});
-app.get("/salesman/login", (req, res) => {
-    res.sendFile(path.join(__dirname, "../Frontend/salesman_login.html"));
-});
 
 // app.get("/he",(req,res)=>{
 //     res.send("Hello world From the he ")

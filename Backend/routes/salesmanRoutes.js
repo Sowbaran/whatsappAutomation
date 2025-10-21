@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getSalesmanProfile, getSalesmanOrders, getAssignedOrders, pickupOrder, dropOrder } = require('../controllers/salesmanController');
+const { getSalesmanProfile, getSalesmanOrders, getAssignedOrders, pickupOrder, dropOrder, createSalesman, updateSalesman } = require('../controllers/salesmanController');
 const authMiddleware = require('../middleware/authMiddleware');
 const Salesman = require('../models/salesmanModel');
 const Order = require('../models/orderModel');
@@ -82,5 +82,11 @@ router.get('/', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// Create salesman
+router.post('/', authMiddleware, createSalesman);
+
+// Update salesman
+router.patch('/:id', authMiddleware, updateSalesman);
 
 module.exports = router;

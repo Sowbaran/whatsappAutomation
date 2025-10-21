@@ -4,7 +4,6 @@ import { ArrowLeft, MapPin, Phone, Mail, Calendar, DollarSign, Package, User, Ed
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import StatusBadge from "@/components/StatusBadge";
-import { mockOrders } from "@/data/mockOrders";
 import { Order, Product } from "@/types/order";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -13,11 +12,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { useQuery } from "@tanstack/react-query";
+import { fetchOrderByIdOrOrderId, type BackendOrder } from "@/lib/api";
 
 const OrderDetails = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const [order, setOrder] = useState<Order | undefined>(mockOrders.find((o) => o.id === orderId));
+  const [order, setOrder] = useState<Order | undefined>(undefined);
   const [statusDialog, setStatusDialog] = useState(false);
   const [paymentDialog, setPaymentDialog] = useState(false);
   const [productsDialog, setProductsDialog] = useState(false);
@@ -33,6 +34,38 @@ const OrderDetails = () => {
     overallDiscount: order?.discount || 0
   });
   const [isEditingSummary, setIsEditingSummary] = useState(false);
+
+  // Fetch order from backend and map to local Order type
+  const { data } = useQuery({
+    queryKey: ["salesman","order", orderId],
+    queryFn: async () => (orderId ? fetchOrderByIdOrOrderId(orderId) : undefined),
+    enabled: !!orderId,
+  });
+
+  useEffect(() => {
+    if (!data) return;
+    const o = data as BackendOrder;
+    const mapped: Order = {
+      id: o._id, // use Mongo _id in salesman app
+      customerName: o.customer?.name || "",
+      customerPhone: o.customer?.phone || "",
+      customerEmail: o.customer?.email || "",
+      customerAddress: o.customer?.shippingAddress || o.customer?.billingAddress || "",
+      products: (o.products || []).map((p, idx) => ({ id: String(idx+1), name: p.product, quantity: p.quantity, price: p.price })),
+      subtotal: (o.products || []).reduce((sum, p) => sum + p.price * p.quantity, 0),
+      discount: 0,
+      tax: 0,
+      shipping: 0,
+      totalAmount: o.totalAmount || 0,
+      status: (o.status?.toLowerCase() as Order["status"]) || "pending",
+      paymentStatus: ((o.payment?.status || "unpaid").toLowerCase() as Order["paymentStatus"]),
+      paymentMethod: o.payment?.method || undefined,
+      orderDate: o.createdAt || new Date().toISOString(),
+      salesman: typeof o.salesman === 'object' && o.salesman && 'name' in o.salesman ? (o.salesman as any).name : undefined,
+      history: [],
+    };
+    setOrder(mapped);
+  }, [data]);
 
   // Update editable order when order changes
   useEffect(() => {
@@ -568,7 +601,10 @@ const OrderDetails = () => {
             <Button variant="outline" onClick={() => setStatusDialog(false)}>
               <X className="w-4 h-4 mr-2" />Cancel
             </Button>
-            <Button onClick={handleStatusSubmit}>
+            <Button 
+              onClick={handleStatusSubmit}
+              className="bg-black text-white dark:bg-white dark:text-black"
+            >
               <Save className="w-4 h-4 mr-2" />Save Changes
             </Button>
           </DialogFooter>

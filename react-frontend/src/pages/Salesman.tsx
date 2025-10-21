@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { fetchSalesmen, createSalesman, updateSalesman, BackendSalesman } from '@/lib/api';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,38 +13,20 @@ interface Salesman {
   password: string;
 }
 
-const initialSalesmen: Salesman[] = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'john@example.com',
-    phone: '9876543210',
-    password: 'password123',
-  },
-  {
-    id: '2',
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    phone: '9123456780',
-    password: 'password456',
-  },
-  {
-    id: '3',
-    name: 'Bob Lee',
-    email: 'bob@example.com',
-    phone: '9988776655',
-    password: 'password789',
-  },
-];
+// Removed initialSalesmen, now fetched from backend
 
 const SalesmanPage = () => {
-  const [salesmen, setSalesmen] = useState<Salesman[]>(initialSalesmen);
+  const [salesmen, setSalesmen] = useState<BackendSalesman[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [adding, setAdding] = useState(false);
+
+  // Loading/error state
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Edit dialog state
   const [editing, setEditing] = useState(false);
@@ -53,29 +37,36 @@ const SalesmanPage = () => {
   const [editPhone, setEditPhone] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
 
-  const handleEditSalesman = (salesman: Salesman) => {
-    setEditSalesman(salesman);
+  const handleEditSalesman = (salesman: BackendSalesman) => {
+    setEditSalesman(salesman as any);
     setEditName(salesman.name);
-    setEditEmail(salesman.email);
-    setEditPassword(salesman.password);
-    setEditPhone(salesman.phone);
+    setEditEmail(salesman.email || '');
+    setEditPassword(''); // don't show hash
+    setEditPhone((salesman as any).phone || '');
     setEditing(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
+    if (!editSalesman) return;
     setSavingEdit(true);
-    setTimeout(() => {
-      setSalesmen(prev => prev.map(s => s.id === editSalesman?.id ? {
-        ...s,
+    setError(null);
+    try {
+      await updateSalesman((editSalesman as any)._id, {
         name: editName,
         email: editEmail,
         password: editPassword,
         phone: editPhone,
-      } : s));
+      });
+      toast.success('Salesman updated');
+      await loadSalesmen();
       setEditing(false);
       setEditSalesman(null);
+    } catch (e: any) {
+      setError(e.message || 'Failed to update salesman');
+      toast.error('Failed to update salesman');
+    } finally {
       setSavingEdit(false);
-    }, 500);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -83,27 +74,43 @@ const SalesmanPage = () => {
     setEditSalesman(null);
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     setAdding(true);
-    setTimeout(() => {
-      setSalesmen(prev => [
-        ...prev,
-        {
-          id: (prev.length + 1).toString(),
-          name,
-          email,
-          password,
-          phone,
-        },
-      ]);
+    setError(null);
+    try {
+      await createSalesman({ name, email, password, phone });
+      toast.success('Salesman added');
+      await loadSalesmen();
       setName('');
       setEmail('');
       setPassword('');
       setPhone('');
       setShowAdd(false);
+    } catch (e: any) {
+      setError(e.message || 'Failed to add salesman');
+      toast.error('Failed to add salesman');
+    } finally {
       setAdding(false);
-    }, 500);
+    }
   };
+
+  // Load salesmen from backend
+  const loadSalesmen = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchSalesmen();
+      setSalesmen(data);
+    } catch (e: any) {
+      setError(e.message || 'Failed to load salesmen');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSalesmen();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -127,11 +134,15 @@ const SalesmanPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {salesmen.map((s) => (
-                  <tr key={s.id} className="border-b border-border/30">
+                {loading ? (
+                  <tr><td colSpan={4}>Loading...</td></tr>
+                ) : error ? (
+                  <tr><td colSpan={4} className="text-red-500">{error}</td></tr>
+                ) : salesmen.map((s) => (
+                  <tr key={s._id} className="border-b border-border/30">
                     <td className="py-2 px-4">{s.name}</td>
                     <td className="py-2 px-4">{s.email}</td>
-                    <td className="py-2 px-4">{s.phone}</td>
+                    <td className="py-2 px-4">{(s as any).phone}</td>
                     <td className="py-2 px-4 text-right">
                       <Button size="sm" variant="outline" onClick={() => handleEditSalesman(s)}>
                         Edit

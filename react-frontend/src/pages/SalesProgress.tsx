@@ -1,78 +1,103 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { UserPlus, TrendingUp, Users, CheckCircle, Clock, Loader2, AlertCircle, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { mockSalesmen, mockOrders } from '@/lib/mockData';
-import { StatusBadge } from '@/components/ui/status-badge';
+import { StatusBadge, type StatusType } from '@/components/ui/status-badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { AssignSalesmanDialog } from '@/components/orders/AssignSalesmanDialog';
 import { Progress } from '@/components/ui/progress';
+import { useQuery } from '@tanstack/react-query';
+import { fetchOrders, fetchSalesmen, assignOrderToSalesman, type BackendOrder, type BackendSalesman } from '@/lib/api';
 
-// Helper function to calculate statistics
-const calculateStats = () => {
-  const totalOrders = mockOrders.length;
-  const pendingOrders = mockOrders.filter(order => order.status === 'pending').length;
-  const processingOrders = mockOrders.filter(order => order.status === 'processing').length;
-  const completedOrders = mockOrders.filter(order => order.status === 'completed').length;
-  const activeSalesmen = new Set(mockOrders.map(order => order.salesman).filter(Boolean)).size;
-  
-  return {
-    totalOrders,
-    pendingOrders,
-    processingOrders,
-    completedOrders,
-    activeSalesmen,
-    completionRate: totalOrders > 0 ? Math.round((completedOrders / totalOrders) * 100) : 0
-  };
+const mapStatus = (s?: string): StatusType => {
+  if (!s) return 'pending';
+  const v = s.toLowerCase();
+  if (v === 'completed' || v === 'delivered') return 'completed';
+  if (v === 'cancelled' || v === 'canceled') return 'cancelled';
+  if (['processing','picked up','picked-up','salesman-assigned','shipped','in_progress'].includes(v)) return 'processing';
+  return 'pending';
 };
 
 const SalesProgress = () => {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<{id: string, currentSalesman: string | null} | null>(null);
-  const unassignedOrders = mockOrders.filter(order => !order.salesman);
-  const stats = calculateStats();
+
+  const { data: ordersData, isLoading: ordersLoading, isError: ordersError } = useQuery({ queryKey: ['orders'], queryFn: fetchOrders });
+  const { data: salesmenData } = useQuery({ queryKey: ['salesmen'], queryFn: fetchSalesmen });
+  const orders = (ordersData || []) as BackendOrder[];
+  const salesmen = (salesmenData || []) as BackendSalesman[];
+
+  const stats = useMemo(() => {
+    const totalOrders = orders.length;
+    const pendingOrders = orders.filter(o => mapStatus(o.status) === 'pending').length;
+    const processingOrders = orders.filter(o => mapStatus(o.status) === 'processing').length;
+    const completedOrders = orders.filter(o => mapStatus(o.status) === 'completed').length;
+    const activeSalesmen = new Set(orders.map(o => typeof o.salesman === 'object' && o.salesman && 'name' in o.salesman ? (o.salesman as any).name : o.salesman).filter(Boolean)).size;
+    return {
+      totalOrders,
+      pendingOrders,
+      processingOrders,
+      completedOrders,
+      activeSalesmen,
+      completionRate: totalOrders > 0 ? Math.round((completedOrders / totalOrders) * 100) : 0
+    };
+  }, [orders]);
+
+  const unassignedOrders = useMemo(() => {
+    return orders.filter(o => !o.salesman).map(o => ({
+      id: o._id, // Use MongoDB _id for API calls
+      orderId: o.orderId, // Keep orderId for display
+      customer: { name: o.customer?.name || '', email: o.customer?.email || '' },
+      date: o.createdAt ? new Date(o.createdAt).toISOString().slice(0,10) : '',
+      total: o.totalAmount || 0,
+      status: mapStatus(o.status),
+    }));
+  }, [orders]);
 
   const handleAssignClick = (orderId: string) => {
     setSelectedOrder({ id: orderId, currentSalesman: null });
     setAssignDialogOpen(true);
   };
 
-  const handleAssign = (salesmanId: number, salesmanName: string) => {
-    // Find and update the order with the new salesman
-    const updatedOrders = mockOrders.map(order => {
-      if (order.id === selectedOrder?.id) {
-        return { ...order, salesman: salesmanName };
+  const handleAssign = async (salesmanId: number, salesmanName: string) => {
+    if (!selectedOrder) return;
+    
+    try {
+      // Find the salesman by name to get their MongoDB _id
+      const salesman = salesmen.find(s => s.name === salesmanName);
+      
+      if (!salesman) {
+        console.error('Salesman not found');
+        return;
       }
-      return order;
-    });
-    mockOrders.splice(0, mockOrders.length, ...updatedOrders);
-    setAssignDialogOpen(false);
+
+      // Call backend API to assign salesman
+      await assignOrderToSalesman(selectedOrder.id, salesman._id);
+      
+      // Close dialog
+      setAssignDialogOpen(false);
+      
+      // Show success message
+      console.log(`${salesmanName} has been assigned to order ${selectedOrder.id}`);
+      
+    } catch (error) {
+      console.error('Error assigning salesman:', error);
+    }
   };
 
   const handleUnassign = () => {
-    if (selectedOrder) {
-      // Find and update the order to remove the salesman
-      const updatedOrders = mockOrders.map(order => {
-        if (order.id === selectedOrder.id) {
-          const { salesman, ...rest } = order;
-          return rest as typeof order;
-        }
-        return order;
-      });
-      mockOrders.splice(0, mockOrders.length, ...updatedOrders);
-      setAssignDialogOpen(false);
-    }
+    setAssignDialogOpen(false);
   };
 
   // Get list of currently assigned salesmen for other orders
   const assignedSalesmen = Array.from(new Set(
-    mockOrders
-      .filter(order => order.salesman && order.id !== selectedOrder?.id)
-      .map(order => order.salesman as string)
-  ));
+    orders
+      .filter(o => o.salesman)
+      .map(o => (typeof o.salesman === 'object' && o.salesman && 'name' in o.salesman) ? (o.salesman as any).name : String(o.salesman))
+  )) as string[];
 
-  console.log("Pending orders test: ",stats.pendingOrders)
+  // console.log("Pending orders:", stats.pendingOrders)
 
   return (
     <div className="space-y-3 p-2 sm:space-y-4 sm:p-4 md:p-6 max-w-full overflow-x-hidden">
@@ -145,29 +170,29 @@ const SalesProgress = () => {
               </div>
               <div className="p-2 sm:p-3 rounded-lg bg-muted/20">
                 <p className="text-[10px] sm:text-xs text-muted-foreground">Total Team</p>
-                <p className="text-base sm:text-xl font-semibold">{mockSalesmen.length}</p>
+                <p className="text-base sm:text-xl font-semibold">{salesmen.length}</p>
               </div>
             </div>
             <div className="space-y-2">
               <p className="text-xs sm:text-sm font-medium">Top Performers</p>
               <div className="space-y-2">
-                {mockSalesmen.slice(0, 3).map((salesman) => (
-                  <div key={salesman.id} className="flex items-center justify-between p-2 hover:bg-muted/30 rounded-lg transition-colors">
+                {salesmen.slice(0, 3).map((salesman) => (
+                  <div key={String(salesman._id)} className="flex items-center justify-between p-2 hover:bg-muted/30 rounded-lg transition-colors">
                     <div className="flex items-center space-x-2 overflow-hidden">
                       <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                         <AvatarFallback className="text-[10px]">
-                          {salesman.name.split(' ').map(n => n[0]).join('')}
+                          {(salesman.name || '').split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
                         <p className="text-xs sm:text-sm font-medium truncate">{salesman.name}</p>
                         <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                          {salesman.activeOrders} active orders
+                          {(salesman.activeOrders || 0)} active orders
                         </p>
                       </div>
                     </div>
                     <span className="text-xs sm:text-sm font-semibold whitespace-nowrap ml-2">
-                      ${salesman.totalSales.toLocaleString()}
+                      ${(salesman.totalSales || 0).toLocaleString()}
                     </span>
                   </div>
                 ))}
@@ -187,18 +212,14 @@ const SalesProgress = () => {
                 {unassignedOrders.length} orders waiting to be assigned
               </CardDescription>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-1.5 text-xs h-8 px-2 sm:px-3 w-full sm:w-auto mt-1 sm:mt-0"
-            >
-              <UserPlus className="h-3.5 w-3.5" />
-              <span>Assign All</span>
-            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {unassignedOrders.length === 0 ? (
+          {ordersLoading ? (
+            <div className="text-center py-6 text-muted-foreground text-sm">Loading...</div>
+          ) : ordersError ? (
+            <div className="text-center py-6 text-red-600 text-sm">Failed to load.</div>
+          ) : unassignedOrders.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground text-sm">
               <p>All orders have been assigned to salesmen</p>
             </div>
@@ -210,7 +231,7 @@ const SalesProgress = () => {
                   <div className="sm:hidden space-y-2">
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="text-xs font-medium text-muted-foreground">Order #{order.id}</p>
+                        <p className="text-xs font-medium text-muted-foreground">Order #{order.orderId}</p>
                         <p className="text-sm font-medium">{order.customer.name}</p>
                         <p className="text-xs text-muted-foreground truncate">{order.customer.email}</p>
                       </div>
@@ -235,7 +256,7 @@ const SalesProgress = () => {
 
                   {/* Desktop View */}
                   <div className="hidden sm:grid grid-cols-12 items-center gap-2 text-sm">
-                    <div className="col-span-2 font-medium">{order.id}</div>
+                    <div className="col-span-2 font-medium">{order.orderId}</div>
                     <div className="col-span-3">
                       <p className="font-medium truncate">{order.customer.name}</p>
                       <p className="text-xs text-muted-foreground truncate">{order.customer.email}</p>

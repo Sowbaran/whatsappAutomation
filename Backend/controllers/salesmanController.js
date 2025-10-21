@@ -28,10 +28,46 @@ const login = async (req, res) => {
             return res.status(400).json({ msg: "Invalid credentials" });
         }
 
-        const token = jwt.sign({ id: salesman._id, role: 'salesman' }, process.env.JWT_SECRET_KEY, { expiresIn: "24h" });
+        const payload = { id: salesman._id, role: 'salesman', name: salesman.name || 'Salesman' };
+        const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, { expiresIn: "24h" });
         console.log("salesman Token: ",token)
-        res.cookie("token", token, { httpOnly: true });
-        res.json({ token, role: 'salesman', redirectUrl: '/salesman/orders' });
+        const isProd = process.env.NODE_ENV === 'production';
+        res.cookie("token", token, { httpOnly: true, secure: isProd });
+        // Redirect to root; backend will serve salesman SPA for non-API routes when role==='salesman'
+        res.json({ token, role: 'salesman', redirectUrl: '/' });
+    } catch (err) {
+        res.status(500).json({ msg: err.message });
+    }
+};
+
+const createSalesman = async (req, res) => {
+    try {
+        const { name, email, phone, password, region } = req.body;
+        if (!name || !email || !phone || !password) {
+            return res.status(400).json({ msg: "name, email, phone and password are required" });
+        }
+        const exists = await Salesman.findOne({ email });
+        if (exists) {
+            return res.status(409).json({ msg: "Salesman with this email already exists" });
+        }
+        const hashed = await bcrypt.hash(password, 10);
+        const s = await Salesman.create({ name, email, phone, password: hashed, region });
+        res.status(201).json(s);
+    } catch (err) {
+        res.status(500).json({ msg: err.message });
+    }
+};
+
+const updateSalesman = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const update = { ...req.body };
+        if (update.password) {
+            update.password = await bcrypt.hash(update.password, 10);
+        }
+        const s = await Salesman.findByIdAndUpdate(id, update, { new: true });
+        if (!s) return res.status(404).json({ msg: "Salesman not found" });
+        res.json(s);
     } catch (err) {
         res.status(500).json({ msg: err.message });
     }
@@ -129,4 +165,4 @@ const dropOrder = async (req, res) => {
     }
 };
 
-module.exports = { login, getSalesmanProfile, getSalesmanOrders, getAssignedOrders, pickupOrder, dropOrder };
+module.exports = { login, getSalesmanProfile, getSalesmanOrders, getAssignedOrders, pickupOrder, dropOrder, createSalesman, updateSalesman };

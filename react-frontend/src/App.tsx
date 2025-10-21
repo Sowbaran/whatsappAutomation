@@ -20,7 +20,7 @@ const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
     path: "/login",
-    element: <Login />
+    element: <Login />                 
   },
   {
     element: <DashboardLayout />,

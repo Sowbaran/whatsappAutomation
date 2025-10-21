@@ -44,7 +44,7 @@ const ConfirmDialog = ({
           </AlertDialogDescription>
         </div>
         <AlertDialogFooter className="flex gap-3 sm:gap-3">
-          <AlertDialogCancel className="bg-card hover:bg-primary-dark hover:text-primary-foreground border-primary-dark text-primary-dark font-semibold transition-all">
+          <AlertDialogCancel className="border-border text-foreground font-semibold">
             {cancelText}
           </AlertDialogCancel>
           <AlertDialogAction
@@ -52,7 +52,7 @@ const ConfirmDialog = ({
             className={
               variant === "destructive"
                 ? "bg-danger hover:bg-danger/90 text-white font-semibold"
-                : "bg-card hover:bg-primary-dark hover:text-primary-foreground text-primary-dark border-primary-dark font-semibold transition-all"
+                : "bg-gradient-to-r from-primary to-primary-glow hover:opacity-90 shadow-elegant font-semibold"
             }
           >
             {confirmText}
