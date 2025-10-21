@@ -73,6 +73,13 @@ router.put('/pickup/:id', authMiddleware, pickupOrder);
 // Drop order (old endpoint)
 router.put('/drop/:id', authMiddleware, dropOrder);
 
+// Get a specific salesman by ID (including password hash)
+router.get('/:id', async (req, res) => {
+    const { id } = req.params;
+    const { getSalesmanById } = require('../controllers/salesmanController');
+    return getSalesmanById(req, res);
+});
+
 // Get all salesmen
 router.get('/', async (req, res) => {
     try {

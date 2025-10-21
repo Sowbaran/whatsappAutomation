@@ -31,8 +31,8 @@ const login = async (req, res) => {
         const payload = { id: salesman._id, role: 'salesman', name: salesman.name || 'Salesman' };
         const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, { expiresIn: "24h" });
         console.log("salesman Token: ",token)
-        const isProd = process.env.NODE_ENV === 'production';
-        res.cookie("token", token, { httpOnly: true, secure: isProd });
+        // Always set SameSite=None and Secure for cross-origin local dev
+        res.cookie("token", token, { httpOnly: true, secure: false, sameSite: 'lax' });
         // Redirect to root; backend will serve salesman SPA for non-API routes when role==='salesman'
         res.json({ token, role: 'salesman', redirectUrl: '/' });
     } catch (err) {
@@ -79,7 +79,16 @@ const getSalesmanProfile = async (req, res) => {
         if (!salesman) {
             return res.status(404).json({ msg: "Salesman not found" });
         }
-        res.json(salesman);
+        // Ensure region and joinedDate are always present
+        const profile = {
+            name: salesman.name || '',
+            email: salesman.email || '',
+            phone: salesman.phone || '',
+            region: salesman.region || '',
+            joinedDate: salesman.joinedAt ? new Date(salesman.joinedAt).toLocaleDateString() : '',
+            _id: salesman._id
+        };
+        res.json(profile);
     } catch (err) {
         res.status(500).json({ msg: err.message });
     }
@@ -165,4 +174,16 @@ const dropOrder = async (req, res) => {
     }
 };
 
-module.exports = { login, getSalesmanProfile, getSalesmanOrders, getAssignedOrders, pickupOrder, dropOrder, createSalesman, updateSalesman };
+// Get a specific salesman by ID (including password hash)
+const getSalesmanById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const salesman = await Salesman.findById(id);
+        if (!salesman) return res.status(404).json({ msg: "Salesman not found" });
+        res.json(salesman);
+    } catch (err) {
+        res.status(500).json({ msg: err.message });
+    }
+};
+
+module.exports = { login, getSalesmanProfile, getSalesmanOrders, getAssignedOrders, pickupOrder, dropOrder, createSalesman, updateSalesman, getSalesmanById };

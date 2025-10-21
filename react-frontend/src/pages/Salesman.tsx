@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchSalesmen, createSalesman, updateSalesman, BackendSalesman } from '@/lib/api';
+import { fetchSalesmen, createSalesman, updateSalesman, fetchSalesmanById, BackendSalesman } from '@/lib/api';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,14 +37,20 @@ const SalesmanPage = () => {
   const [editPhone, setEditPhone] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
 
-  const handleEditSalesman = (salesman: BackendSalesman) => {
+  const handleEditSalesman = async (salesman: BackendSalesman) => {
     setEditSalesman(salesman as any);
     setEditName(salesman.name);
     setEditEmail(salesman.email || '');
-    setEditPassword(''); // don't show hash
+    try {
+      const fullSalesman = await fetchSalesmanById((salesman as any)._id);
+      setEditPassword(fullSalesman.password || '');
+    } catch {
+      setEditPassword('');
+    }
     setEditPhone((salesman as any).phone || '');
     setEditing(true);
   };
+
 
   const handleSaveEdit = async () => {
     if (!editSalesman) return;

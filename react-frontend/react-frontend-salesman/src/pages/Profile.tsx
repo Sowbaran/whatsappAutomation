@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, Mail, Phone, Calendar, LogOut } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,20 +10,28 @@ const Profile = () => {
   const [logoutDialog, setLogoutDialog] = useState(false);
   const navigate = useNavigate();
 
+  // Static placeholder data for initial render
   const salesmanData = {
-    name: "Michael Johnson",
-    email: "michael.johnson@electroshop.com",
-    phone: "+1 (555) 987-6543",
-    region: "West Region",
-    joinedDate: "March 22, 2023",
+    name: "Amit Kumar",
+    email: "amit.kumar@example.com",
+    phone: "+91 98765 43210",
+    region: "North Region",
+    joinedDate: "April 15, 2024",
   };
 
   const handleLogout = () => {
     toast.success("Logged out successfully!");
     // In a real app, you would clear auth tokens and redirect to login
-    navigate("/");
+    window.location.href = "http://localhost:8080/login";
     setLogoutDialog(false);
   };
+
+  // Always render the static profile for now
+  let name = salesmanData.name;
+  let region = salesmanData.region;
+  let email = salesmanData.email;
+  let phone = salesmanData.phone;
+  let joinedDate = salesmanData.joinedDate;
 
   return (
     <div className="space-y-6">
@@ -40,9 +48,9 @@ const Profile = () => {
               <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 border-4 border-white/30">
                 <User className="w-12 h-12" />
               </div>
-              <h2 className="text-2xl font-bold mb-1">{salesmanData.name}</h2>
+              <h2 className="text-2xl font-bold mb-1">{name || 'No Name'}</h2>
               <p className="text-primary-foreground/90 font-medium">
-                {salesmanData.region}
+                {region || 'No Region'}
               </p>
             </div>
           </div>
@@ -58,7 +66,7 @@ const Profile = () => {
                   Email
                 </h3>
                 <p className="text-base font-semibold text-foreground break-all">
-                  {salesmanData.email}
+                  {email || 'No Email'}
                 </p>
               </div>
             </div>
@@ -72,7 +80,7 @@ const Profile = () => {
                   Phone
                 </h3>
                 <p className="text-base font-semibold text-foreground">
-                  {salesmanData.phone}
+                  {phone || 'No Phone'}
                 </p>
               </div>
             </div>
@@ -86,7 +94,7 @@ const Profile = () => {
                   Joined Date
                 </h3>
                 <p className="text-base font-semibold text-foreground">
-                  {salesmanData.joinedDate}
+                  {joinedDate || 'No Date'}
                 </p>
               </div>
             </div>

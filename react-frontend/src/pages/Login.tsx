@@ -23,8 +23,15 @@ const Login = () => {
         body: JSON.stringify({ email, password }),
       });
       if (!res.ok) throw new Error('Invalid credentials');
+      const data = await res.json();
       toast({ title: 'Login Successful', description: 'Welcome to WhatsApp Shop Dashboard' });
-      navigate('/');
+      if (data.role === 'salesman') {
+        window.location.href = 'http://localhost:8081/'; // Change to your salesman frontend port
+      } else {
+        localStorage.setItem('role', 'admin');
+        sessionStorage.setItem('role', 'admin');
+        window.location.href = 'http://localhost:8080/dashboard';
+      }
     } catch (err) {
       toast({
         title: 'Login Failed',

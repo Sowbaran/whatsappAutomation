@@ -44,6 +44,7 @@ app.use(cookieParser());
 // Serve images from whatsappAutomation folder
 app.use('/images', express.static('./whatsappAutomation'));
 
+
 app.use((req, res, next) => {
     const token = req.cookies.token;
     if (token) {
@@ -62,37 +63,11 @@ const salesmanDist = path.join(__dirname, "../react-frontend/react-frontend-sale
 console.log("[SPA Paths] adminDist=", adminDist);
 console.log("[SPA Paths] salesmanDist=", salesmanDist);
 
-// Static assets: try admin build first, then salesman build
-// This avoids a mismatch where /login serves admin index.html but asset requests
-// get routed to the salesman static dir by role, causing HTML fallback and MIME errors.
-app.use((req, res, next) => {
-    if (req.path.startsWith('/api/')) return next();
-    return express.static(adminDist)(req, res, (err) => {
-        if (err) return next(err);
-        return express.static(salesmanDist)(req, res, next);
-    });
-});
 
 // Favicon: avoid noisy 404
 app.get('/favicon.ico', (_req, res) => res.sendStatus(204));
 
-// SPA entry for login should always serve admin app
-app.get('/login', (req, res) => {
-    const adminIndex = path.join(adminDist, 'index.html');
-    if (!fs.existsSync(adminIndex)) {
-        return res.status(500).send('Admin build not found. Please run npm run build in react-frontend.');
-    }
-    return res.sendFile(adminIndex);
-});
 
-// Explicit SPA routes for Orders pages to support direct navigation
-app.get(['/orders', '/orders/:id'], (req, res) => {
-    const adminIndex = path.join(adminDist, 'index.html');
-    if (!fs.existsSync(adminIndex)) {
-        return res.status(500).send('Admin build not found. Please run npm run build in react-frontend.');
-    }
-    return res.sendFile(adminIndex);
-});
 
 app.use("/api", userRouter);
 app.use("/api/salesmen", salesmanRouter);
@@ -101,22 +76,6 @@ app.use("/api/orders", orderRouter);
 app.use("/api/products", productRouter);
 app.use("/api/customers", customerRouter);
 
-// SPA fallback for all non-API routes (Express 5 compatible)
-app.use((req, res, next) => {
-    if (req.path.startsWith('/api/')) return next();
-    // Prefer salesman app only if salesman and build exists
-    if (req.user && req.user.role === 'salesman') {
-        const salesmanIndex = path.join(salesmanDist, 'index.html');
-        if (fs.existsSync(salesmanIndex)) {
-            return res.sendFile(salesmanIndex);
-        }
-    }
-    const adminIndex = path.join(adminDist, 'index.html');
-    if (!fs.existsSync(adminIndex)) {
-        return res.status(500).send('Admin build not found. Please run npm run build in react-frontend.');
-    }
-    return res.sendFile(adminIndex);
-});
 
 
 // app.get("/he",(req,res)=>{

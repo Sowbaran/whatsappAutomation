@@ -92,6 +92,10 @@ export async function fetchSalesmen() {
   return http<BackendSalesman[]>("/api/salesmen");
 }
 
+export async function fetchSalesmanById(id: string) {
+  return http<BackendSalesman & { password?: string }>(`/api/salesmen/${encodeURIComponent(id)}`);
+}
+
 export async function createSalesman(input: { name: string; email: string; phone: string; password: string; region?: string }) {
   return http<BackendSalesman>("/api/salesmen", {
     method: "POST",

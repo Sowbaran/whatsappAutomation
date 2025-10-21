@@ -15,15 +15,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchAssignedOrders, pickupOrder, dropOrder, type BackendOrder } from "@/lib/api";
+import { fetchAllOrdersForSalesman, pickupOrder, dropOrder, type BackendOrder } from "@/lib/api";
 
 const Orders = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const queryClient = useQueryClient();
-  const { data, isLoading, isError } = useQuery({ queryKey: ["salesman","assigned-orders"], queryFn: fetchAssignedOrders });
+  const { data, isLoading, isError } = useQuery({ queryKey: ["salesman","all-orders"], queryFn: fetchAllOrdersForSalesman });
   const orders = useMemo(() => {
     const list = (data || []) as BackendOrder[];
-    return list.map((o) => ({
+    // Only show orders where salesman is null or not set
+    return list.filter(o => !o.salesman).map((o) => ({
       id: o._id, // use Mongo _id for actions; show orderId in UI
       customerName: o.customer?.name || "",
       customerPhone: o.customer?.phone || "",
