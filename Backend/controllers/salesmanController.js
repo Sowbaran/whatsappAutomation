@@ -178,9 +178,18 @@ const dropOrder = async (req, res) => {
 const getSalesmanById = async (req, res) => {
     try {
         const { id } = req.params;
-        const salesman = await Salesman.findById(id);
+        const salesman = await Salesman.findById(id).select("-password");
         if (!salesman) return res.status(404).json({ msg: "Salesman not found" });
-        res.json(salesman);
+        // Return only the profile fields in the same format as getSalesmanProfile
+        const profile = {
+            name: salesman.name || '',
+            email: salesman.email || '',
+            phone: salesman.phone || '',
+            region: salesman.region || '',
+            joinedDate: salesman.joinedAt ? new Date(salesman.joinedAt).toLocaleDateString() : '',
+            _id: salesman._id
+        };
+        res.json(profile);
     } catch (err) {
         res.status(500).json({ msg: err.message });
     }

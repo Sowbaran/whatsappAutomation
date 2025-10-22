@@ -26,6 +26,7 @@ const App = () => (
               <Route path="/assigned-orders" element={<AssignedOrders />} />
               <Route path="/order/:orderId" element={<OrderDetails />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/:salesmanId" element={<Profile />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>

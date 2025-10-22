@@ -23,7 +23,9 @@ app.use((req, res, next) => {
     const allowedOrigins = new Set([
         'http://localhost:3000',
         'http://localhost:8080',
-        'http://127.0.0.1:8080'
+        'http://127.0.0.1:8080',
+        'http://localhost:8081',
+        'http://127.0.0.1:8081'
     ]);
     if (origin && allowedOrigins.has(origin)) {
         res.header('Access-Control-Allow-Origin', origin);
@@ -57,30 +59,15 @@ app.use((req, res, next) => {
     next();
 });
 
-// Paths to built React apps
-const adminDist = path.join(__dirname, "../react-frontend/dist");
-const salesmanDist = path.join(__dirname, "../react-frontend/react-frontend-salesman/dist");
-console.log("[SPA Paths] adminDist=", adminDist);
-console.log("[SPA Paths] salesmanDist=", salesmanDist);
-
-
 // Favicon: avoid noisy 404
 app.get('/favicon.ico', (_req, res) => res.sendStatus(204));
 
-
-
+// API routes
 app.use("/api", userRouter);
 app.use("/api/salesmen", salesmanRouter);
-// API routes for orders, products, customers
 app.use("/api/orders", orderRouter);
 app.use("/api/products", productRouter);
 app.use("/api/customers", customerRouter);
-
-
-
-// app.get("/he",(req,res)=>{
-//     res.send("Hello world From the he ")
-// })
 
 app.use("", dashboardRouter);
 
@@ -92,6 +79,8 @@ app.get("/api/health", (req, res) => {
         timestamp: new Date().toISOString()
     });
 });
+
+// Backend only serves API and static assets, not frontend SPAs
 
 app.listen(port,()=>{
     console.log(`App is listening at port ${port}`)

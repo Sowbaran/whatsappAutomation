@@ -5,7 +5,7 @@ import { Menu, X, ChevronLeft, LayoutDashboard, ShoppingCart, Users, Package, Tr
 import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Orders', href: '/orders', icon: ShoppingCart },
   { name: 'Customers', href: '/customers', icon: Users },
   { name: 'Products', href: '/products', icon: Package },

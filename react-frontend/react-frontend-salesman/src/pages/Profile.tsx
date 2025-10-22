@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { User, Mail, Phone, Calendar, LogOut } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,32 +8,66 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
+  const { salesmanId } = useParams<{ salesmanId?: string }>();
   const [logoutDialog, setLogoutDialog] = useState(false);
   const navigate = useNavigate();
 
-  // Static placeholder data for initial render
-  const salesmanData = {
-    name: "Amit Kumar",
-    email: "amit.kumar@example.com",
-    phone: "+91 98765 43210",
-    region: "North Region",
-    joinedDate: "April 15, 2024",
-  };
+  // Dynamic profile state
+  const [profile, setProfile] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    region: '',
+    joinedDate: '',
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const { fetchSalesmanProfile, fetchSalesmanProfileById } = await import('@/lib/api');
+        let data;
+        if (salesmanId) {
+          data = await fetchSalesmanProfileById(salesmanId);
+        } else {
+          data = await fetchSalesmanProfile();
+        }
+        setProfile({
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          region: data.region || '',
+          joinedDate: data.joinedDate || '',
+        });
+      } catch (err: any) {
+        setError(err.message || 'Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [salesmanId]);
 
   const handleLogout = () => {
     toast.success("Logged out successfully!");
-    // In a real app, you would clear auth tokens and redirect to login
-    window.location.href = "http://localhost:8080/login";
+    window.location.href = "http://localhost:3000/login";
     setLogoutDialog(false);
   };
 
-  // Always render the static profile for now
-  let name = salesmanData.name;
-  let region = salesmanData.region;
-  let email = salesmanData.email;
-  let phone = salesmanData.phone;
-  let joinedDate = salesmanData.joinedDate;
+  let name = profile.name;
+  let region = profile.region;
+  let email = profile.email;
+  let phone = profile.phone;
+  let joinedDate = profile.joinedDate;
 
+  if (loading) {
+    return <div className="flex justify-center items-center min-h-[60vh] text-lg">Loading profile...</div>;
+  }
+  if (error) {
+    return <div className="flex justify-center items-center min-h-[60vh] text-danger">{error}</div>;
+  }
   return (
     <div className="space-y-6">
       <div className="pb-4 border-b border-border">

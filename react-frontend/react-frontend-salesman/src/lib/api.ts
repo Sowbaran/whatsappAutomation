@@ -54,3 +54,11 @@ export function pickupOrder(orderMongoId: string) {
 export function dropOrder(orderMongoId: string) {
   return http<BackendOrder>(`/api/salesmen/drop/${encodeURIComponent(orderMongoId)}`, { method: 'PUT' });
 }
+
+export function fetchSalesmanProfile() {
+  return http<{ name: string; email: string; phone: string; region: string; joinedDate: string }>("/api/salesmen/profile");
+}
+
+export function fetchSalesmanProfileById(id: string) {
+  return http<{ name: string; email: string; phone: string; region: string; joinedDate: string }>(`/api/salesmen/${encodeURIComponent(id)}`);
+}

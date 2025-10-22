@@ -26,11 +26,11 @@ const Login = () => {
       const data = await res.json();
       toast({ title: 'Login Successful', description: 'Welcome to WhatsApp Shop Dashboard' });
       if (data.role === 'salesman') {
-        window.location.href = 'http://localhost:8081/'; // Change to your salesman frontend port
+        window.location.href = 'http://localhost:8080/'; // Correct salesman frontend port
       } else {
         localStorage.setItem('role', 'admin');
         sessionStorage.setItem('role', 'admin');
-        window.location.href = 'http://localhost:8080/dashboard';
+        window.location.href = 'http://localhost:3000/dashboard'; // Correct admin dashboard port
       }
     } catch (err) {
       toast({
