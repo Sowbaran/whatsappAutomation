@@ -342,6 +342,7 @@ const OrderDetails = () => {
       setConfirmDialog({ open: false, type: confirmDialog.type });
       setStatusDialog(false);
       setPaymentDialog(false);
+      setProductsDialog(false);
       setIsConfirming(false);
     }
   };

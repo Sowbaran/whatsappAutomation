@@ -62,7 +62,19 @@ const statusConfig: Record<StatusType, { label: string; className: string }> = {
 
 const StatusBadge = ({ status, className }: StatusBadgeProps) => {
   const config = statusConfig[status];
-
+  if (!config) {
+    // Fallback for undefined or invalid status
+    return (
+      <span
+        className={cn(
+          "inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border bg-muted/20 text-muted border-muted/30",
+          className
+        )}
+      >
+        Unknown
+      </span>
+    );
+  }
   return (
     <span
       className={cn(

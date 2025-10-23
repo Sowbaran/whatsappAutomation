@@ -1,4 +1,12 @@
 export type BackendOrder = {
+  timeline?: Array<{
+    action: string;
+    description?: string;
+    date?: string;
+    updatedBy?: string;
+    statusChangeReason?: string;
+    statusRemarks?: string;
+  }>;
   _id: string;
   orderId: string;
   customer: {
@@ -43,7 +51,7 @@ export function fetchAllOrdersForSalesman() {
 }
 
 export function fetchOrderByIdOrOrderId(idOrOrderId: string) {
-  // Use the generic orders endpoint that supports orderId and ObjectId
+  // Use the correct endpoint for fetching order details
   return http<BackendOrder>(`/api/orders/${encodeURIComponent(idOrOrderId)}`);
 }
 

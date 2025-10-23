@@ -25,7 +25,8 @@ const Orders = () => {
     const list = (data || []) as BackendOrder[];
     // Only show orders where salesman is null or not set
     return list.filter(o => !o.salesman).map((o) => ({
-      id: o._id, // use Mongo _id for actions; show orderId in UI
+      id: o._id, // for actions
+      orderId: o.orderId, // for display
       customerName: o.customer?.name || "",
       customerPhone: o.customer?.phone || "",
       customerEmail: o.customer?.email || "",
@@ -36,9 +37,9 @@ const Orders = () => {
       paymentStatus: ((o.payment?.status || "unpaid").toLowerCase() as Order["paymentStatus"]),
       orderDate: o.createdAt || new Date().toISOString(),
       salesman: typeof o.salesman === 'object' && o.salesman && 'name' in o.salesman ? (o.salesman as any).name : undefined,
-    } as Order));
+    } as Order & { orderId: string }));
   }, [data]);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<(Order & { orderId: string }) | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     orderId: string;
@@ -49,9 +50,9 @@ const Orders = () => {
 
   const filteredOrders = orders.filter(
     (order) =>
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (order.orderId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customerPhone.includes(searchTerm)
+      order.customerPhone.includes(searchTerm))
   );
 
   const handlePickup = (orderId: string) => {
@@ -67,6 +68,7 @@ const Orders = () => {
     onSuccess: () => {
       toast.success("Order picked up successfully!");
       queryClient.invalidateQueries({ queryKey: ["salesman","assigned-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["salesman","all-orders"] });
       setConfirmDialog({ open: false, orderId: "", action: "pickup" });
     },
     onError: () => toast.error("Failed to pickup order"),
@@ -76,6 +78,7 @@ const Orders = () => {
     onSuccess: () => {
       toast.success("Order dropped. Available for re-pickup.");
       queryClient.invalidateQueries({ queryKey: ["salesman","assigned-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["salesman","all-orders"] });
       setConfirmDialog({ open: false, orderId: "", action: "pickup" });
     },
     onError: () => toast.error("Failed to drop order"),
@@ -87,14 +90,37 @@ const Orders = () => {
     else dropMut.mutate(orderId);
   };
 
-  const showDetails = (order: Order) => {
+  const showDetails = (order: Order & { orderId: string }) => {
     setSelectedOrder(order);
     setDetailsDialog(true);
   };
 
   const viewDetails = (orderMongoId: string) => {
-    navigate(`/order/${orderMongoId}`);
+    navigate(`/orders/${orderMongoId}`);
   };
+
+  // Order update persistence logic (example: status update)
+  const updateOrderMut = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Order> }) => {
+      // Replace with actual API endpoint for updating order
+      return fetch(`/api/orders/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(updates),
+      }).then(res => {
+        if (!res.ok) throw new Error('Failed to update order');
+        return res.json();
+      });
+    },
+    onSuccess: () => {
+      toast.success('Order updated successfully!');
+      queryClient.invalidateQueries({ queryKey: ["salesman","all-orders"] });
+    },
+    onError: () => toast.error('Failed to update order'),
+  });
+
+  // Example usage: updateOrderMut.mutate({ id: order.id, updates: { status: "completed" } });
 
   return (
     <div className="space-y-6">
@@ -105,7 +131,7 @@ const Orders = () => {
       <Card className="overflow-hidden">
         <div className="p-6 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-xl font-semibold text-foreground">Order List</h2>
-          <div className="relative w-full sm:w-72">
+          <div className="relative w-full sm:w-72 flex gap-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="text"
@@ -114,6 +140,17 @@ const Orders = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
+            <Button
+              variant="outline"
+              onClick={() => {
+                // Example filter: only show orders with status 'pending'
+                setSearchTerm('');
+                // You can add more advanced filter logic here
+                toast.info('Filter applied: Pending orders');
+              }}
+            >
+              Filter Pending
+            </Button>
           </div>
         </div>
 
@@ -129,7 +166,7 @@ const Orders = () => {
               <div className="space-y-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-semibold text-foreground">{order.id}</p>
+                    <p className="font-semibold text-foreground">{order.orderId}</p>
                     <p className="text-sm text-muted-foreground">
                       {order.customerName}
                     </p>
@@ -210,7 +247,7 @@ const Orders = () => {
                   className="hover:bg-muted/50 transition-colors"
                 >
                   <td className="px-6 py-4 font-medium text-foreground">
-                    {order.id}
+                    {order.orderId}
                   </td>
                   <td className="px-6 py-4 text-foreground">
                     {order.customerName}
@@ -275,7 +312,7 @@ const Orders = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Order ID</p>
-                  <p className="font-semibold">{selectedOrder.id}</p>
+                  <p className="font-semibold">{selectedOrder.orderId}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Customer</p>

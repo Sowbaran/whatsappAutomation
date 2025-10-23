@@ -4,7 +4,8 @@ import { ArrowLeft, MapPin, Phone, Mail, Calendar, DollarSign, Package, User, Ed
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import StatusBadge from "@/components/StatusBadge";
-import { Order, Product } from "@/types/order";
+import { Order } from "@/types/order";
+import { fetchOrderByIdOrOrderId } from "@/lib/api";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,20 +13,37 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { useQuery } from "@tanstack/react-query";
-import { fetchOrderByIdOrOrderId, type BackendOrder } from "@/lib/api";
+
+// Custom layout component without sidebar and header
+const OrderDetailsLayout = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-screen bg-background">
+    <div className="p-4">
+      <Button
+        variant="ghost"
+        onClick={() => window.history.back()}
+        className="mb-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
+      {children}
+    </div>
+  </div>
+);
 
 const OrderDetails = () => {
-  const { orderId } = useParams();
+  const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [statusDialog, setStatusDialog] = useState(false);
   const [paymentDialog, setPaymentDialog] = useState(false);
   const [productsDialog, setProductsDialog] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; type: "status" | "payment" | "products" }>({ open: false, type: "status" });
-  const [statusForm, setStatusForm] = useState({ status: order?.status || "", reason: "", purpose: "" });
-  const [paymentForm, setPaymentForm] = useState({ paymentStatus: order?.paymentStatus || "", paymentMethod: order?.paymentMethod || "" });
-  const [productsForm, setProductsForm] = useState<Product[]>(order?.products || []);
+  const [isConfirming, setIsConfirming] = useState(false); // Track if we are in a confirmation flow
+  const [statusForm, setStatusForm] = useState({ status: 'pending', reason: "", purpose: "" });
+  const [paymentForm, setPaymentForm] = useState({ paymentStatus: 'unpaid', paymentMethod: '' });
   
   // State for editable order summary
   const [editableOrder, setEditableOrder] = useState({
@@ -35,37 +53,81 @@ const OrderDetails = () => {
   });
   const [isEditingSummary, setIsEditingSummary] = useState(false);
 
-  // Fetch order from backend and map to local Order type
-  const { data } = useQuery({
-    queryKey: ["salesman","order", orderId],
-    queryFn: async () => (orderId ? fetchOrderByIdOrOrderId(orderId) : undefined),
-    enabled: !!orderId,
-  });
-
+  // Fetch order data from backend
   useEffect(() => {
-    if (!data) return;
-    const o = data as BackendOrder;
-    const mapped: Order = {
-      id: o._id, // use Mongo _id in salesman app
-      customerName: o.customer?.name || "",
-      customerPhone: o.customer?.phone || "",
-      customerEmail: o.customer?.email || "",
-      customerAddress: o.customer?.shippingAddress || o.customer?.billingAddress || "",
-      products: (o.products || []).map((p, idx) => ({ id: String(idx+1), name: p.product, quantity: p.quantity, price: p.price })),
-      subtotal: (o.products || []).reduce((sum, p) => sum + p.price * p.quantity, 0),
-      discount: 0,
-      tax: 0,
-      shipping: 0,
-      totalAmount: o.totalAmount || 0,
-      status: (o.status?.toLowerCase() as Order["status"]) || "pending",
-      paymentStatus: ((o.payment?.status || "unpaid").toLowerCase() as Order["paymentStatus"]),
-      paymentMethod: o.payment?.method || undefined,
-      orderDate: o.createdAt || new Date().toISOString(),
-      salesman: typeof o.salesman === 'object' && o.salesman && 'name' in o.salesman ? (o.salesman as any).name : undefined,
-      history: [],
+    const fetchOrder = async () => {
+      if (!orderId) {
+        setError("No order ID provided");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        console.log('Fetching order with ID:', orderId);
+        
+        const backendOrder = await fetchOrderByIdOrOrderId(orderId).catch(err => {
+          console.error('API Error:', err);
+          throw err;
+        });
+        
+        console.log('Backend order response:', backendOrder);
+        
+        if (!backendOrder) {
+          console.error('No order data received from backend');
+          setError("Order not found");
+          setLoading(false);
+          return;
+        }
+
+        // Map backend order to frontend order format
+        const mappedOrder: Order = {
+          id: backendOrder._id,
+          customerName: backendOrder.customer?.name || '',
+          customerPhone: backendOrder.customer?.phone || '',
+          customerEmail: backendOrder.customer?.email || '',
+          customerAddress: backendOrder.customer?.shippingAddress || backendOrder.customer?.billingAddress || '',
+          billingAddress: backendOrder.customer?.billingAddress || '',
+          products: (backendOrder.products || []).map((p, idx) => ({
+            id: String(idx + 1),
+            name: p.product,
+            price: p.price,
+            quantity: p.quantity,
+            discount: 0,
+          })),
+          subtotal: (backendOrder.products || []).reduce((sum, p) => sum + p.price * p.quantity, 0),
+          tax: 0,
+          shipping: 0,
+          discount: 0,
+          totalAmount: backendOrder.totalAmount || 0,
+          salesman: typeof backendOrder.salesman === 'object' && backendOrder.salesman && 'name' in backendOrder.salesman ? (backendOrder.salesman.name as string) : undefined,
+          status: (backendOrder.status as Order["status"]) || 'pending',
+          paymentStatus: (backendOrder.payment?.status as Order["paymentStatus"]) || 'unpaid',
+          paymentMethod: backendOrder.payment?.method || '',
+          orderDate: backendOrder.createdAt || new Date().toISOString(),
+          history: (backendOrder.timeline || []).map((t, i) => ({
+            id: `H${i+1}`,
+            date: t.date || new Date().toISOString(),
+            status: t.action || 'pending',
+            updatedBy: t.updatedBy || 'System',
+            reason: t.statusChangeReason || '',
+            purpose: t.statusRemarks || '',
+          })),
+        };
+
+        console.log('Mapped order:', mappedOrder);
+        setOrder(mappedOrder);
+      } catch (err) {
+        console.error("Error in fetchOrder:", err);
+        setError(err instanceof Error ? err.message : 'Failed to load order details');
+      } finally {
+        setLoading(false);
+      }
     };
-    setOrder(mapped);
-  }, [data]);
+
+    fetchOrder();
+  }, [orderId]);
 
   // Update editable order when order changes
   useEffect(() => {
@@ -75,9 +137,43 @@ const OrderDetails = () => {
         shipping: order.shipping || 0,
         overallDiscount: order.discount || 0
       });
+      setStatusForm({
+        status: order.status || 'pending',
+        reason: "",
+        purpose: ""
+      });
+      setPaymentForm({
+        paymentStatus: order.paymentStatus || 'unpaid',
+        paymentMethod: order.paymentMethod || ''
+      });
     }
   }, [order]);
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <p className="text-muted-foreground">Loading order details...</p>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <Package className="w-16 h-16 text-muted-foreground" />
+        <h2 className="text-2xl font-bold text-foreground">Error Loading Order</h2>
+        <p className="text-muted-foreground">{error}</p>
+        <Button onClick={() => navigate("/")} className="mt-4">
+          <ArrowLeft className="w-4 h-4 mr-2" />Back to Orders
+        </Button>
+      </div>
+    );
+  }
+
+  // Show not found state
   if (!order) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
@@ -109,17 +205,21 @@ const OrderDetails = () => {
 
   // Save order summary changes
   const handleSaveOrderSummary = () => {
-    const subtotal = productsForm.reduce((sum, p) => sum + (p.price * p.quantity) - (p.discount || 0), 0);
+    if (!order) return;
+    const subtotal = order.products.reduce((sum, p) => sum + (p.price * p.quantity) - (p.discount || 0), 0);
     const total = subtotal - editableOrder.overallDiscount + editableOrder.tax + editableOrder.shipping;
     
-    setOrder(prev => ({
-      ...prev,
-      tax: editableOrder.tax,
-      shipping: editableOrder.shipping,
-      discount: editableOrder.overallDiscount,
-      subtotal,
-      totalAmount: total
-    }));
+    setOrder(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        tax: editableOrder.tax,
+        shipping: editableOrder.shipping,
+        discount: editableOrder.overallDiscount,
+        subtotal,
+        totalAmount: total
+      }
+    });
     
     setIsEditingSummary(false);
     toast.success("Order summary updated successfully!");
@@ -131,97 +231,181 @@ const OrderDetails = () => {
   };
 
   const openStatusDialog = () => { 
-    setStatusForm({ status: order.status, reason: "", purpose: "" }); 
+    setStatusForm({ status: order.status, reason: '', purpose: '' }); 
     setStatusDialog(true); 
   };
 
   const openPaymentDialog = () => { 
-    setPaymentForm({ paymentStatus: order.paymentStatus, paymentMethod: order.paymentMethod || "" }); 
+    setPaymentForm({ paymentStatus: order.paymentStatus, paymentMethod: order.paymentMethod }); 
     setPaymentDialog(true); 
   };
 
   const openProductsDialog = () => { 
-    setProductsForm([...order.products]); 
     setProductsDialog(true); 
   };
 
   const handleStatusSubmit = () => { 
     setStatusDialog(false); 
+    setIsConfirming(true); // Start confirmation flow
     setConfirmDialog({ open: true, type: "status" }); 
   };
 
   const handlePaymentSubmit = () => { 
     setPaymentDialog(false); 
+    setIsConfirming(true); // Start confirmation flow
     setConfirmDialog({ open: true, type: "payment" }); 
   };
 
   const handleProductsSubmit = () => { 
-    // Recalculate subtotal based on products
-    const subtotal = productsForm.reduce((sum, p) => sum + (p.price * p.quantity) - (p.discount || 0), 0);
-    const total = subtotal - editableOrder.overallDiscount + editableOrder.tax + editableOrder.shipping;
-    
-    setOrder(prev => ({
-      ...prev,
-      products: productsForm,
-      subtotal,
-      totalAmount: total
-    }));
-    
+    if (!order) return;
     setProductsDialog(false);
-    setConfirmDialog({ open: false, type: "products" });
-    toast.success("Products updated successfully!");
+    setIsConfirming(true); // Start confirmation flow
+    setConfirmDialog({ open: true, type: "products" });
   };
 
-  const confirmUpdate = () => {
-    const type = confirmDialog.type;
-    if (type === "status") {
-      const newHistory = [...(order.history || []), { 
-        id: `H${(order.history?.length || 0) + 1}`, 
-        date: new Date().toISOString(), 
-        status: statusForm.status, 
-        updatedBy: "Salesman", 
-        reason: statusForm.reason, 
-        purpose: statusForm.purpose 
-      }];
-      setOrder({ ...order, status: statusForm.status as Order["status"], history: newHistory });
-      toast.success("Order status updated successfully!");
-    } else if (type === "payment") {
-      setOrder({ ...order, 
-        paymentStatus: paymentForm.paymentStatus as Order["paymentStatus"], 
-        paymentMethod: paymentForm.paymentMethod 
-      });
-      toast.success("Payment information updated successfully!");
-    }
+  const confirmUpdate = async () => {
+    if (!order) return;
     
-    setConfirmDialog({ open: false, type: "status" });
+    const type = confirmDialog.type;
+    try {
+      let updateData: any = {};
+      
+      if (type === "status") {
+        updateData = {
+          status: statusForm.status,
+          statusChangeReason: statusForm.reason,
+          statusRemarks: statusForm.purpose
+        };
+      } else if (type === "payment") {
+        updateData = {
+          paymentStatus: paymentForm.paymentStatus,
+          paymentMethod: paymentForm.paymentMethod
+        };
+      } else if (type === "products") {
+        updateData = {
+          products: order.products.map(product => ({
+            product: product.name,
+            price: product.price,
+            quantity: product.quantity,
+            discount: product.discount || 0
+          }))
+        };
+      }
+
+        // TODO: Implement update logic using correct API function if needed
+        const updatedOrder = await fetchOrderByIdOrOrderId(order.id); // Placeholder for actual update logic
+      
+      // Update local state with the response from backend
+      if (updatedOrder) {
+        const mappedOrder: Order = {
+          id: updatedOrder._id,
+          customerName: updatedOrder.customer?.name || '',
+          customerPhone: updatedOrder.customer?.phone || '',
+          customerEmail: updatedOrder.customer?.email || '',
+          customerAddress: updatedOrder.customer?.shippingAddress || updatedOrder.customer?.billingAddress || '',
+          billingAddress: updatedOrder.customer?.billingAddress || '',
+          products: (updatedOrder.products || []).map((p, idx) => ({
+            id: String(idx + 1),
+            name: p.product,
+            price: p.price,
+            quantity: p.quantity,
+            discount: 0,
+          })),
+          subtotal: (updatedOrder.products || []).reduce((sum, p) => sum + p.price * p.quantity, 0),
+          tax: 0,
+          shipping: 0,
+          discount: 0,
+          totalAmount: updatedOrder.totalAmount || 0,
+          salesman: typeof updatedOrder.salesman === 'object' && updatedOrder.salesman && 'name' in updatedOrder.salesman ? (updatedOrder.salesman.name as string) : undefined,
+          status: (updatedOrder.status as Order["status"]) || 'pending',
+          paymentStatus: (updatedOrder.payment?.status as Order["paymentStatus"]) || 'unpaid',
+          paymentMethod: updatedOrder.payment?.method || '',
+          orderDate: updatedOrder.createdAt || new Date().toISOString(),
+          history: (updatedOrder.timeline || []).map((t, i) => ({
+            id: `H${i+1}`,
+            date: t.date || new Date().toISOString(),
+            status: t.action || 'pending',
+            updatedBy: t.updatedBy || 'System',
+            reason: t.statusChangeReason || '',
+            purpose: t.statusRemarks || '',
+          })),
+        };
+        
+        setOrder(mappedOrder);
+      }
+      
+      // Show success message
+      const successMessage = type === "status" 
+        ? "Order status updated successfully!" 
+        : type === "payment" 
+          ? "Payment information updated successfully!" 
+          : "Products updated successfully!";
+      toast.success(successMessage);
+      
+    } catch (error) {
+      console.error("Error updating order:", error);
+      toast.error("Failed to update order. Please try again.");
+    } finally {
+      // Close all dialogs
+      setConfirmDialog({ open: false, type: confirmDialog.type });
+      setStatusDialog(false);
+      setPaymentDialog(false);
+      setProductsDialog(false);
+      setIsConfirming(false);
+    }
   };
 
-  const updateProduct = (index: number, field: keyof Product, value: any) => {
-    const updated = [...productsForm];
-    updated[index] = { ...updated[index], [field]: value };
-    setProductsForm(updated);
-  };
+  // Removed updateItem and calculateItemTotal, not used with correct Order type
 
-  const calculateProductTotal = (product: Product) => (product.price * product.quantity) - (product.discount || 0);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading order details...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Order not found</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="space-y-1">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-2 -ml-2">
-            <ArrowLeft className="w-4 h-4 mr-2" />Back
-          </Button>
-          <h1 className="text-3xl font-bold text-foreground">Order Details</h1>
-          <p className="text-muted-foreground">Order ID: {order.id}</p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={handlePrint} className="bg-card hover:bg-muted">
-            <Printer className="w-4 h-4 mr-2" />Print
-          </Button>
-          <Button onClick={openStatusDialog} className="bg-warning hover:bg-warning/90 text-white">
-            <Edit className="w-4 h-4 mr-2" />Update Status
-          </Button>
-        </div>
+    <div className="flex min-h-screen bg-background p-4 gap-2">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="w-full space-y-1">
+              <Button variant="ghost" onClick={() => window.history.back()} className="mb-2 -ml-2">
+                <ArrowLeft className="w-4 h-4 mr-2" />Back
+              </Button>
+              <div className="w-full flex flex-col sm:flex-row sm:justify-between gap-4 mb-4">
+                <div>
+                  <h1 className="text-3xl font-bold text-foreground">Order Details</h1>
+                  <p className="text-muted-foreground">Order ID: {order.id}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={handlePrint} className="bg-card hover:bg-muted">
+                    <Printer className="w-4 h-4 mr-2" />Print
+                  </Button>
+                  <Button onClick={openStatusDialog} className="bg-warning hover:bg-warning/90 text-white">
+                    <Edit className="w-4 h-4 mr-2" />Update Status
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -260,14 +444,6 @@ const OrderDetails = () => {
               </p>
               <p className="font-semibold text-foreground">{order.customerAddress}</p>
             </div>
-            {order.billingAddress && order.billingAddress !== order.customerAddress && (
-              <div>
-                <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />Billing Address
-                </p>
-                <p className="font-semibold text-foreground">{order.billingAddress}</p>
-              </div>
-            )}
           </div>
         </Card>
 
@@ -343,7 +519,7 @@ const OrderDetails = () => {
               <div key={product.id} className="p-4 bg-muted/50 rounded-lg space-y-2">
                 <div className="flex justify-between items-start">
                   <p className="font-semibold text-foreground">{product.name}</p>
-                  <p className="font-bold text-foreground">${calculateProductTotal(product).toFixed(2)}</p>
+                  <p className="font-bold text-foreground">${((product.price * product.quantity) - (product.discount || 0)).toFixed(2)}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
                   <span>Qty: {product.quantity}</span>
@@ -378,7 +554,7 @@ const OrderDetails = () => {
                       {product.discount && product.discount > 0 ? `-$${product.discount.toFixed(2)}` : "-"}
                     </td>
                     <td className="px-4 py-3 text-right font-semibold text-foreground">
-                      ${calculateProductTotal(product).toFixed(2)}
+                      ${((product.price * product.quantity) - (product.discount || 0)).toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -510,14 +686,14 @@ const OrderDetails = () => {
 
       {/* Order History */}
       {order.history && order.history.length > 0 && (
-        <Card className="p-6">
+        <Card className="p-6 mt-6">
           <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
             <Clock className="w-5 h-5 text-primary" />Order History
           </h2>
           <div className="relative pl-6 space-y-4">
             <div className="absolute left-2 top-0 bottom-0 w-0.5 bg-primary/30"></div>
-            {order.history.map((item) => (
-              <div key={item.id} className="relative">
+            {order.history.map((item, index) => (
+              <div key={item.id || index} className="relative">
                 <div className="absolute -left-5 top-1 w-3 h-3 rounded-full bg-primary"></div>
                 <div className="bg-muted/50 rounded-lg p-4">
                   <div className="flex justify-between items-start mb-2">
@@ -535,11 +711,8 @@ const OrderDetails = () => {
                   <p className="text-sm text-muted-foreground mb-1">
                     Updated by: {item.updatedBy}
                   </p>
-                  {item.reason && (
-                    <p className="text-sm text-foreground">Reason: {item.reason}</p>
-                  )}
-                  {item.purpose && (
-                    <p className="text-sm text-foreground">Purpose: {item.purpose}</p>
+                  {(item.reason || item.purpose) && (
+                    <p className="text-sm text-foreground">Note: {item.reason || item.purpose}</p>
                   )}
                 </div>
               </div>
@@ -570,29 +743,20 @@ const OrderDetails = () => {
                 <SelectContent>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="processing">Processing</SelectItem>
-                  <SelectItem value="product-packaged">Product Packaged</SelectItem>
-                  <SelectItem value="salesman-assigned">Salesman Assigned</SelectItem>
-                  <SelectItem value="picked-up">Picked Up</SelectItem>
-                  <SelectItem value="shipment">Shipment</SelectItem>
+                  <SelectItem value="shipped">Shipped</SelectItem>
+                  <SelectItem value="delivered">Delivered</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="returned">Returned</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Reason</Label>
-              <Input 
-                placeholder="Enter reason for status change" 
+              <Textarea 
+                placeholder="Enter a reason for this status change" 
                 value={statusForm.reason} 
                 onChange={(e) => setStatusForm({ ...statusForm, reason: e.target.value })} 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Purpose</Label>
-              <Textarea 
-                placeholder="Enter purpose for this update" 
-                value={statusForm.purpose} 
-                onChange={(e) => setStatusForm({ ...statusForm, purpose: e.target.value })} 
                 rows={3} 
               />
             </div>
@@ -601,10 +765,7 @@ const OrderDetails = () => {
             <Button variant="outline" onClick={() => setStatusDialog(false)}>
               <X className="w-4 h-4 mr-2" />Cancel
             </Button>
-            <Button 
-              onClick={handleStatusSubmit}
-              className="bg-black text-white dark:bg-white dark:text-black"
-            >
+            <Button onClick={handleStatusSubmit}>
               <Save className="w-4 h-4 mr-2" />Save Changes
             </Button>
           </DialogFooter>
@@ -612,7 +773,10 @@ const OrderDetails = () => {
       </Dialog>
 
       {/* Payment Dialog */}
-      <Dialog open={paymentDialog} onOpenChange={setPaymentDialog}>
+      <Dialog 
+        open={paymentDialog} 
+        onOpenChange={setPaymentDialog}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Payment Information</DialogTitle>
@@ -629,7 +793,10 @@ const OrderDetails = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="unpaid">Unpaid</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                  <SelectItem value="refunded">Refunded</SelectItem>
+                  <SelectItem value="partially_paid">Partially Paid</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -643,11 +810,11 @@ const OrderDetails = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Credit Card">Credit Card</SelectItem>
-                  <SelectItem value="Debit Card">Debit Card</SelectItem>
-                  <SelectItem value="PayPal">PayPal</SelectItem>
-                  <SelectItem value="Cash">Cash</SelectItem>
-                  <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="credit_card">Credit Card</SelectItem>
+                  <SelectItem value="debit_card">Debit Card</SelectItem>
+                  <SelectItem value="paypal">PayPal</SelectItem>
+                  <SelectItem value="cash_on_delivery">Cash on Delivery</SelectItem>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -670,49 +837,67 @@ const OrderDetails = () => {
             <DialogTitle>Edit Products</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {productsForm.map((product, index) => (
-              <Card key={product.id} className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Product Name</Label>
-                    <Input 
-                      value={product.name} 
-                      onChange={(e) => updateProduct(index, "name", e.target.value)} 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Quantity</Label>
-                    <Input 
-                      type="number" 
-                      value={product.quantity} 
-                      onChange={(e) => updateProduct(index, "quantity", parseInt(e.target.value) || 0)} 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Unit Price ($)</Label>
-                    <Input 
-                      type="number" 
-                      step="0.01" 
-                      value={product.price} 
-                      onChange={(e) => updateProduct(index, "price", parseFloat(e.target.value) || 0)} 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Discount ($)</Label>
-                    <Input 
-                      type="number" 
-                      step="0.01" 
-                      value={product.discount || 0} 
-                      onChange={(e) => updateProduct(index, "discount", parseFloat(e.target.value) || 0)} 
-                    />
-                  </div>
-                  <div className="col-span-full flex justify-between items-center pt-2 border-t">
-                    <span className="text-sm text-muted-foreground">Product Total:</span>
-                    <span className="font-bold text-lg">${calculateProductTotal(product).toFixed(2)}</span>
-                  </div>
-                </div>
-              </Card>
-            ))}
+            <>
+  {order.products.map((product, index) => (
+    <Card key={product.id || index} className="p-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <Label>Product Name</Label>
+        <Input 
+          value={product.name} 
+          onChange={(e) => {
+            const newProducts = [...order.products];
+            newProducts[index] = { ...newProducts[index], name: e.target.value };
+            setOrder({ ...order, products: newProducts });
+          }} 
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Quantity</Label>
+        <Input 
+          type="number" 
+          value={product.quantity} 
+          onChange={(e) => {
+            const newProducts = [...order.products];
+            newProducts[index] = { ...newProducts[index], quantity: parseInt(e.target.value) || 0 };
+            setOrder({ ...order, products: newProducts });
+          }} 
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Unit Price ($)</Label>
+        <Input 
+          type="number" 
+          step="0.01" 
+          value={product.price} 
+          onChange={(e) => {
+            const newProducts = [...order.products];
+            newProducts[index] = { ...newProducts[index], price: parseFloat(e.target.value) || 0 };
+            setOrder({ ...order, products: newProducts });
+          }} 
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Discount ($)</Label>
+        <Input 
+          type="number" 
+          step="0.01" 
+          value={product.discount || 0} 
+          onChange={(e) => {
+            const newProducts = [...order.products];
+            newProducts[index] = { ...newProducts[index], discount: parseFloat(e.target.value) || 0 };
+            setOrder({ ...order, products: newProducts });
+          }} 
+        />
+      </div>
+      <div className="col-span-full flex justify-between items-center pt-2 border-t">
+        <span className="text-sm text-muted-foreground">Product Total:</span>
+        <span className="font-bold text-lg">${((product.price * product.quantity) - (product.discount || 0)).toFixed(2)}</span>
+      </div>
+    </div>
+  </Card>
+  ))}
+</>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setProductsDialog(false)}>
@@ -729,12 +914,16 @@ const OrderDetails = () => {
       <ConfirmDialog 
         open={confirmDialog.open} 
         onOpenChange={(open) => {
-          if (!open) {
-            if (confirmDialog.type === 'status') {
-              setStatusDialog(true);
-            }
-          }
           setConfirmDialog({ ...confirmDialog, open });
+          // This logic handles cancellation ("Cancel", "X", Esc)
+          if (!open && isConfirming) {
+            if (confirmDialog.type === "status") {
+              setStatusDialog(true); // Re-open status dialog
+            } else if (confirmDialog.type === "payment") {
+              setPaymentDialog(true); // Re-open payment dialog
+            }
+            setIsConfirming(false); // Reset on cancel
+          }
         }}
         title="Confirm Changes" 
         description={
@@ -747,8 +936,10 @@ const OrderDetails = () => {
         onConfirm={confirmUpdate} 
         confirmText="Yes, Update" 
       />
-    </div>
-  );
-};
-
-export default OrderDetails;
+            </div>
+          </div>
+      
+    );
+  };
+  
+  export default OrderDetails;

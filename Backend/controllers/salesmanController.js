@@ -195,4 +195,80 @@ const getSalesmanById = async (req, res) => {
     }
 };
 
-module.exports = { login, getSalesmanProfile, getSalesmanOrders, getAssignedOrders, pickupOrder, dropOrder, createSalesman, updateSalesman, getSalesmanById };
+// Get a single order by ID with salesman authorization
+const getOrderById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log('getOrderById - Requested order ID:', id);
+        console.log('getOrderById - User ID:', req.user?.id);
+        
+        // Find order by ID or orderId
+        const query = {
+            $or: [
+                { _id: id },
+                { orderId: id }
+            ]
+        };
+        
+        console.log('getOrderById - Query:', JSON.stringify(query));
+        
+        let order = await Order.findOne(query).populate('salesman', 'name email phone');
+        console.log('getOrderById - Found order:', order ? 'Yes' : 'No');
+
+        if (!order) {
+            console.log('getOrderById - Order not found with ID:', id);
+            return res.status(404).json({ 
+                success: false,
+                msg: 'Order not found',
+                query: query,
+                orderId: id
+            });
+        }
+
+        // Check if the order is assigned to the current salesman
+        if (order.salesman) {
+            const salesmanId = order.salesman._id?.toString() || order.salesman.toString();
+            console.log('getOrderById - Order salesman ID:', salesmanId);
+            console.log('getOrderById - Requesting user ID:', req.user.id);
+            
+            if (salesmanId !== req.user.id) {
+                console.log('getOrderById - Unauthorized: Order not assigned to this salesman');
+                return res.status(403).json({ 
+                    success: false,
+                    msg: 'Not authorized to view this order',
+                    orderId: id,
+                    salesmanId: salesmanId,
+                    userId: req.user.id
+                });
+            }
+        } else {
+            console.log('getOrderById - Order has no assigned salesman');
+        }
+
+        console.log('getOrderById - Sending order data');
+        res.json({
+            success: true,
+            data: order
+        });
+    } catch (err) {
+        console.error('Error in getOrderById:', err);
+        res.status(500).json({ 
+            success: false,
+            msg: 'Server error',
+            error: err.message 
+        });
+    }
+};
+
+module.exports = { 
+    login, 
+    getSalesmanProfile, 
+    getSalesmanOrders, 
+    getAssignedOrders, 
+    pickupOrder, 
+    dropOrder, 
+    createSalesman, 
+    updateSalesman, 
+    getSalesmanById,
+    getOrderById 
+};

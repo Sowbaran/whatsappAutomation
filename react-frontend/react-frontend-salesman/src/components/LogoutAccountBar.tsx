@@ -10,7 +10,7 @@ export default function LogoutAccountBar() {
 
   const handleLogout = () => {
     // Clear auth tokens if any
-    window.location.href = "http://localhost:8080/login";
+    window.location.href = "http://localhost:3000/login";
     setOpen(false);
   };
 

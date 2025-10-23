@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getSalesmanProfile, getSalesmanOrders, getAssignedOrders, pickupOrder, dropOrder, createSalesman, updateSalesman } = require('../controllers/salesmanController');
+const { getSalesmanProfile, getSalesmanOrders, getAssignedOrders, pickupOrder, dropOrder, createSalesman, updateSalesman, getOrderById } = require('../controllers/salesmanController');
 const authMiddleware = require('../middleware/authMiddleware');
 const Salesman = require('../models/salesmanModel');
 const Order = require('../models/orderModel');
@@ -19,6 +19,9 @@ router.get('/all-orders', authMiddleware, getSalesmanOrders);
 
 // Get all orders assigned to the logged-in salesman
 router.get('/assigned-orders', authMiddleware, getAssignedOrders);
+
+// Get a single order by ID or orderId
+router.get('/orders/:id', authMiddleware, getOrderById);
 
 // Pickup an order
 router.put('/pickup/:orderId', authMiddleware, async (req, res) => {

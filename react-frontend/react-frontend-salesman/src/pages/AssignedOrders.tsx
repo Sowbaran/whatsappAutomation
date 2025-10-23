@@ -25,7 +25,8 @@ const AssignedOrders = () => {
   const orders = useMemo(() => {
     const list = (data || []) as BackendOrder[];
     return list.map((o) => ({
-      id: o._id,
+      id: o._id, // for actions
+      orderId: o.orderId, // for display
       customerName: o.customer?.name || "",
       customerPhone: o.customer?.phone || "",
       customerEmail: o.customer?.email || "",
@@ -36,15 +37,15 @@ const AssignedOrders = () => {
       paymentStatus: ((o.payment?.status || "unpaid").toLowerCase() as Order["paymentStatus"]),
       orderDate: o.createdAt || new Date().toISOString(),
       salesman: typeof o.salesman === 'object' && o.salesman && 'name' in o.salesman ? (o.salesman as any).name : undefined,
-    } as Order));
+    } as Order & { orderId: string }));
   }, [data]);
   const navigate = useNavigate();
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (order.orderId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customerPhone.includes(searchTerm);
+      order.customerPhone.includes(searchTerm));
     const matchesStatus =
       statusFilter === "all" || order.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -115,7 +116,7 @@ const AssignedOrders = () => {
               <div className="space-y-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-semibold text-foreground">{order.id}</p>
+                    <p className="font-semibold text-foreground">{order.orderId}</p>
                     <p className="text-sm text-muted-foreground">
                       {order.customerName}
                     </p>
@@ -132,7 +133,7 @@ const AssignedOrders = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => navigate(`/order/${order.id}`)}
+                    onClick={() => navigate(`/orders/${order.id}`)}
                     className="w-full"
                   >
                     <Eye className="w-4 h-4 mr-1" />
@@ -182,7 +183,7 @@ const AssignedOrders = () => {
                   className="hover:bg-muted/50 transition-colors"
                 >
                   <td className="px-6 py-4 font-medium text-foreground">
-                    {order.id}
+                    {order.orderId}
                   </td>
                   <td className="px-6 py-4">{order.customerName}</td>
                   <td className="px-6 py-4">{order.customerPhone}</td>
@@ -194,7 +195,7 @@ const AssignedOrders = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => navigate(`/order/${order.id}`)}
+                      onClick={() => navigate(`/orders/${order.id}`)}
                     >
                       <Eye className="w-4 h-4 mr-1" />
                       View Details
