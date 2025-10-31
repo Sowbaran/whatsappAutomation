@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { UserPlus, TrendingUp, Users, CheckCircle, Clock, Clock3, AlertCircle, ChevronRight } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { UserPlus, TrendingUp, Users, CheckCircle, Clock, Clock3, AlertCircle } from 'lucide-react';
+import { OrdersByStatusDialog } from '@/components/orders/OrdersByStatusDialog';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -8,6 +9,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { AssignSalesmanDialog } from '@/components/orders/AssignSalesmanDialog';
 import { Progress } from '@/components/ui/progress';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'react-router-dom';
 import { fetchOrders, fetchSalesmen, assignOrderToSalesman, type BackendOrder, type BackendSalesman } from '@/lib/api';
 
 const mapStatus = (s?: string): StatusType => {
@@ -22,7 +24,44 @@ const mapStatus = (s?: string): StatusType => {
 };
 
 const SalesProgress = () => {
+  const location = useLocation();
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<StatusType | null>(null);
+
+  // Check for dialog state in both location state and browser history state
+  useEffect(() => {
+    const checkDialogState = () => {
+      // First check URL hash for dialog state
+      const hash = window.location.hash.replace('#', '');
+      const statuses: StatusType[] = ['pending', 'processing', 'completed', 'cancelled', 'picked-up', 'assigned'];
+      
+      if (hash && statuses.includes(hash as StatusType)) {
+        setSelectedStatus(hash as StatusType);
+        setStatusDialogOpen(true);
+        return;
+      }
+      
+      // Then check location state
+      if (location.state?.fromDialog) {
+        setSelectedStatus(location.state.fromDialog);
+        setStatusDialogOpen(true);
+        // Clear the state to prevent the dialog from reopening on refresh
+        window.history.replaceState({}, '');
+      }
+    };
+
+    // Check on initial load
+    checkDialogState();
+
+    // Also handle browser back/forward navigation
+    const handlePopState = () => {
+      checkDialogState();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [location.state]);
   const [selectedOrder, setSelectedOrder] = useState<{id: string, currentSalesman: string | null} | null>(null);
 
   const { data: ordersData, isLoading: ordersLoading, isError: ordersError } = useQuery({ queryKey: ['orders'], queryFn: fetchOrders });
@@ -34,9 +73,12 @@ const SalesProgress = () => {
     const totalOrders = orders.length;
     const statusCounts = orders.reduce<Record<string, number>>((acc, order) => {
       const status = mapStatus(order.status);
+      console.log(`Order ${order.orderId} - Raw status: ${order.status}, Mapped status: ${status}`);
       acc[status] = (acc[status] || 0) + 1;
       return acc;
-    }, {});
+    }, {} as Record<StatusType, number>);
+    
+    console.log('Status counts:', statusCounts);
     
     const activeSalesmen = new Set(
       orders
@@ -60,16 +102,47 @@ const SalesProgress = () => {
     };
   }, [orders]);
 
-  const unassignedOrders = useMemo(() => {
-    return orders.filter(o => !o.salesman).map(o => ({
-      id: o._id, // Use MongoDB _id for API calls
-      orderId: o.orderId, // Keep orderId for display
+  const allOrders = useMemo(() => {
+    return orders.map(o => ({
+      id: o._id,
+      orderId: o.orderId,
       customer: { name: o.customer?.name || '', email: o.customer?.email || '' },
       date: o.createdAt ? new Date(o.createdAt).toISOString().slice(0,10) : '',
       total: o.totalAmount || 0,
       status: mapStatus(o.status),
     }));
   }, [orders]);
+
+  const unassignedOrders = useMemo(() => {
+    return allOrders.filter(o => !orders.find(order => order._id === o.id)?.salesman);
+  }, [allOrders, orders]);
+
+  const handleStatusClick = (status: StatusType) => {
+    // Store the status in URL hash when opening the dialog
+    window.history.pushState({ statusDialog: status }, '');
+    setSelectedStatus(status);
+    setStatusDialogOpen(true);
+  };
+  
+  // Handle browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state?.statusDialog) {
+        const status = event.state.statusDialog as StatusType;
+        setSelectedStatus(status);
+        setStatusDialogOpen(true);
+      } else {
+        setStatusDialogOpen(false);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const getOrdersByStatus = (status: StatusType) => {
+    return allOrders.filter(order => mapStatus(orders.find(o => o._id === order.id)?.status) === status);
+  };
 
   const handleAssignClick = (orderId: string) => {
     setSelectedOrder({ id: orderId, currentSalesman: null });
@@ -134,7 +207,10 @@ const SalesProgress = () => {
           <CardContent className="space-y-1">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
               {/* Pending */}
-              <div className="flex flex-col items-center p-2 sm:p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20">
+              <div 
+                className="flex flex-col items-center p-2 sm:p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 cursor-pointer transition-colors"
+                onClick={() => handleStatusClick('pending')}
+              >
                 <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-1">
                   <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                 </div>
@@ -143,16 +219,24 @@ const SalesProgress = () => {
               </div>
 
               {/* Salesman Assigned */}
-              <div className="flex flex-col items-center p-2 sm:p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+              <div 
+                className="flex flex-col items-center p-2 sm:p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 cursor-pointer transition-colors"
+                onClick={() => handleStatusClick('assigned')}
+              >
                 <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-1">
                   <UserPlus className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
-                <span className="text-lg sm:text-xl font-semibold text-foreground">{stats.statusCounts['salesman-assigned'] || 0}</span>
+                <span className="text-lg sm:text-xl font-semibold text-foreground">
+                  {(stats.statusCounts['assigned'] || 0) + (stats.statusCounts['salesman-assigned'] || 0)}
+                </span>
                 <span className="text-xs text-muted-foreground text-center">Assigned</span>
               </div>
 
               {/* Picked Up */}
-              <div className="flex flex-col items-center p-2 sm:p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20">
+              <div 
+                className="flex flex-col items-center p-2 sm:p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 cursor-pointer transition-colors"
+                onClick={() => handleStatusClick('picked-up')}
+              >
                 <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-1">
                   <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
@@ -161,7 +245,10 @@ const SalesProgress = () => {
               </div>
 
               {/* In Progress */}
-              <div className="flex flex-col items-center p-2 sm:p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
+              <div 
+                className="flex flex-col items-center p-2 sm:p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 cursor-pointer transition-colors"
+                onClick={() => handleStatusClick('processing')}
+              >
                 <div className="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mb-1">
                   <Clock3 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
@@ -170,7 +257,10 @@ const SalesProgress = () => {
               </div>
 
               {/* Completed */}
-              <div className="flex flex-col items-center p-2 sm:p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
+              <div 
+                className="flex flex-col items-center p-2 sm:p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 cursor-pointer transition-colors"
+                onClick={() => handleStatusClick('completed')}
+              >
                 <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-1">
                   <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
@@ -179,7 +269,10 @@ const SalesProgress = () => {
               </div>
 
               {/* Cancelled */}
-              <div className="flex flex-col items-center p-2 sm:p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20">
+              <div 
+                className="flex flex-col items-center p-2 sm:p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-100 dark:hover:bg-rose-900/30 cursor-pointer transition-colors"
+                onClick={() => handleStatusClick('cancelled')}
+              >
                 <div className="h-10 w-10 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center mb-1">
                   <AlertCircle className="h-5 w-5 text-rose-600 dark:text-rose-400" />
                 </div>
@@ -353,6 +446,15 @@ const SalesProgress = () => {
         onUnassign={handleUnassign}
         assignedSalesmen={assignedSalesmen}
       />
+
+      {selectedStatus && (
+        <OrdersByStatusDialog
+          open={statusDialogOpen}
+          onOpenChange={setStatusDialogOpen}
+          status={selectedStatus}
+          orders={getOrdersByStatus(selectedStatus)}
+        />
+      )}
     </div>
   );
 };

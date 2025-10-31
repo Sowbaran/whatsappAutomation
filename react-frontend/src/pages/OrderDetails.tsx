@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ArrowLeft, MapPin, Phone, Mail, Calendar, DollarSign, Package, User, Edit, Printer, CreditCard, Clock, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 const OrderDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [order, setOrder] = useState<Order | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -359,7 +360,22 @@ const OrderDetails = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="space-y-1">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-2 -ml-2">
+          <Button 
+            variant="ghost" 
+            onClick={() => {
+              // Always navigate back to sales progress with the dialog state if it exists
+              if (location.state?.fromDialog) {
+                // Use replace to prevent adding extra history entries
+                navigate('/sales', { 
+                  state: { fromDialog: location.state.fromDialog },
+                  replace: true
+                });
+              } else {
+                navigate('/sales', { replace: true });
+              }
+            }} 
+            className="mb-2 -ml-2"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />Back
           </Button>
           <h1 className="text-3xl font-bold text-foreground">Order Details</h1>
