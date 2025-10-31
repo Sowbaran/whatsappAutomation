@@ -4,7 +4,7 @@ const Product = require('./models/productModel');
 const Customer = require('./models/customerModel');
 require('dotenv').config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/whatsappAutomation';
+const MONGO_URI = process.env.MONGODB || 'mongodb://localhost:27017/whatsappAutomation';
 
 async function seed() {
     await mongoose.connect(MONGO_URI);
@@ -46,6 +46,16 @@ async function seed() {
     for (let i = 0; i < 12; i++) {
         const cust = customers[i % customers.length];
         const prod = products[i % products.length];
+        
+        // Add some variety to discounts, tax, and shipping
+        const productDiscount = i % 3 === 0 ? 5 : 0; // Every 3rd order has product discount
+        const overallDiscount = i % 4 === 0 ? 10 : 0; // Every 4th order has overall discount
+        const tax = Math.round(prod.price * 0.1); // 10% tax
+        const shipping = i % 2 === 0 ? 15 : 20; // Alternating shipping costs
+        
+        const subtotal = (prod.price * 1) - productDiscount;
+        const totalAmount = subtotal - overallDiscount + tax + shipping;
+        
         orders.push({
             orderId: `ORD${1000 + i}`,
             customer: {
@@ -60,16 +70,20 @@ async function seed() {
                 product: prod.name,
                 sku: `SKU${1000 + i}`,
                 price: prod.price,
-                quantity: 1
+                quantity: 1,
+                discount: productDiscount
             }],
-            totalAmount: prod.price,
+            totalAmount: totalAmount,
+            tax: tax,
+            shipping: shipping,
+            discount: overallDiscount,
             status: i % 2 === 0 ? 'pending' : 'completed',
             payment: {
                 method: 'credit',
                 status: i % 2 === 0 ? 'unpaid' : 'paid',
                 transactionId: `TXN${1000 + i}`,
                 date: new Date(),
-                amountPaid: prod.price,
+                amountPaid: totalAmount,
                 cardEnding: '1234'
             },
             timeline: [{

@@ -36,8 +36,12 @@ export type BackendOrder = {
     sku?: string;
     price: number;
     quantity: number;
+    discount?: number;
   }>;
   totalAmount: number;
+  tax?: number;
+  shipping?: number;
+  discount?: number;
   status: string;
   salesman?: { _id: string; name?: string } | string | null;
   payment?: { method?: string; status?: string };

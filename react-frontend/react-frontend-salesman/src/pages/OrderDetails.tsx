@@ -94,12 +94,12 @@ const OrderDetails = () => {
             name: p.product,
             price: p.price,
             quantity: p.quantity,
-            discount: 0,
+            discount: p.discount || 0,
           })),
-          subtotal: (backendOrder.products || []).reduce((sum, p) => sum + p.price * p.quantity, 0),
-          tax: 0,
-          shipping: 0,
-          discount: 0,
+          subtotal: (backendOrder.products || []).reduce((sum, p) => sum + p.price * p.quantity - (p.discount || 0), 0),
+          tax: backendOrder.tax || 0,
+          shipping: backendOrder.shipping || 0,
+          discount: backendOrder.discount || 0,
           totalAmount: backendOrder.totalAmount || 0,
           salesman: typeof backendOrder.salesman === 'object' && backendOrder.salesman && 'name' in backendOrder.salesman ? (backendOrder.salesman.name as string) : undefined,
           status: (backendOrder.status as Order["status"]) || 'pending',
@@ -149,6 +149,22 @@ const OrderDetails = () => {
       });
     }
   }, [order]);
+
+  // Recalculate totalAmount whenever products, tax, shipping, or discount change
+  useEffect(() => {
+    if (order) {
+      const subtotal = order.products.reduce((sum, p) => sum + (p.price * p.quantity) - (p.discount || 0), 0);
+      const total = subtotal - (order.discount || 0) + (order.tax || 0) + (order.shipping || 0);
+      
+      // Only update if the calculated total is different from current totalAmount
+      if (Math.abs(total - order.totalAmount) > 0.01) {
+        setOrder(prev => {
+          if (!prev) return prev;
+          return { ...prev, totalAmount: total, subtotal };
+        });
+      }
+    }
+  }, [order?.products, order?.tax, order?.shipping, order?.discount]);
 
   // Show loading state
   if (loading) {
@@ -301,13 +317,21 @@ const OrderDetails = () => {
           }
         };
       } else if (type === "products") {
+        // Calculate new subtotal and total based on updated products
+        const subtotal = order.products.reduce((sum, item) => sum + (item.price * item.quantity) - (item.discount || 0), 0);
+        const total = subtotal - editableOrder.overallDiscount + editableOrder.tax + editableOrder.shipping;
+        
         updateData = {
           products: order.products.map(product => ({
             product: product.name,
             price: product.price,
             quantity: product.quantity,
             discount: product.discount || 0
-          }))
+          })),
+          tax: editableOrder.tax,
+          shipping: editableOrder.shipping,
+          discount: editableOrder.overallDiscount,
+          totalAmount: total
         };
       }
 
@@ -328,12 +352,12 @@ const OrderDetails = () => {
             name: p.product,
             price: p.price,
             quantity: p.quantity,
-            discount: 0,
+            discount: p.discount || 0,
           })),
-          subtotal: (updatedOrder.products || []).reduce((sum, p) => sum + p.price * p.quantity, 0),
-          tax: 0,
-          shipping: 0,
-          discount: 0,
+          subtotal: (updatedOrder.products || []).reduce((sum, p) => sum + p.price * p.quantity - (p.discount || 0), 0),
+          tax: updatedOrder.tax || 0,
+          shipping: updatedOrder.shipping || 0,
+          discount: updatedOrder.discount || 0,
           totalAmount: updatedOrder.totalAmount || 0,
           salesman: typeof updatedOrder.salesman === 'object' && updatedOrder.salesman && 'name' in updatedOrder.salesman ? (updatedOrder.salesman.name as string) : undefined,
           status: (updatedOrder.status as Order["status"]) || 'pending',
@@ -648,7 +672,7 @@ const OrderDetails = () => {
 
             <div className="flex justify-between items-center pt-3 border-t border-border">
               <div className="flex items-center gap-2 text-foreground">
-                <DollarSign className="w-5 h-5" />
+                {/* <DollarSign className="w-5 h-5" /> */}
                 <span className="text-lg font-semibold">Total Amount</span>
               </div>
               <span className="text-2xl font-bold text-primary">

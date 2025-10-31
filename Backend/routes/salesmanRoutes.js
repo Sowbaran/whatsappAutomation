@@ -87,7 +87,34 @@ router.get('/:id', async (req, res) => {
 router.get('/', async (req, res) => {
     try {
         const salesmen = await Salesman.find();
-        res.json(salesmen);
+        
+        // Calculate activeOrders and totalSales for each salesman
+        const salesmenWithStats = await Promise.all(salesmen.map(async (salesman) => {
+            // Count active orders (not completed, not cancelled)
+            const activeOrders = await Order.countDocuments({
+                salesman: salesman._id,
+                status: { $nin: ['completed', 'cancelled', 'canceled'] }
+            });
+            
+            // Calculate total sales from completed orders
+            const completedOrders = await Order.find({
+                salesman: salesman._id,
+                status: { $in: ['completed', 'delivered'] }
+            });
+            const totalSales = completedOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+            
+            return {
+                _id: salesman._id,
+                name: salesman.name,
+                email: salesman.email,
+                phone: salesman.phone,
+                region: salesman.region,
+                activeOrders,
+                totalSales
+            };
+        }));
+        
+        res.json(salesmenWithStats);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

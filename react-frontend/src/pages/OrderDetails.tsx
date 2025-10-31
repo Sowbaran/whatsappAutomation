@@ -76,12 +76,12 @@ const OrderDetails = () => {
             name: p.product,
             price: p.price,
             quantity: p.quantity,
-            discount: 0,
+            discount: p.discount || 0,
           })),
-          subtotal: (backendOrder.products || []).reduce((sum, p) => sum + p.price * p.quantity, 0),
-          tax: 0,
-          shipping: 0,
-          discount: 0,
+          subtotal: (backendOrder.products || []).reduce((sum, p) => sum + p.price * p.quantity - (p.discount || 0), 0),
+          tax: backendOrder.tax || 0,
+          shipping: backendOrder.shipping || 0,
+          discount: backendOrder.discount || 0,
           total: backendOrder.totalAmount || 0,
           salesman: typeof backendOrder.salesman === 'object' && backendOrder.salesman && 'name' in backendOrder.salesman ? (backendOrder.salesman.name as string) : undefined,
           status: (backendOrder.status as any) || 'pending',
@@ -187,25 +187,41 @@ const OrderDetails = () => {
   };
 
   // Save order summary changes
-  const handleSaveOrderSummary = () => {
+  const handleSaveOrderSummary = async () => {
     if (!order) return;
     const subtotal = itemsForm.reduce((sum, p) => sum + (p.price * p.quantity) - (p.discount || 0), 0);
     const total = subtotal - editableOrder.overallDiscount + editableOrder.tax + editableOrder.shipping;
     
-    setOrder(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
+    try {
+      // Update backend with new tax, shipping, discount, and totalAmount
+      const updateData = {
         tax: editableOrder.tax,
         shipping: editableOrder.shipping,
         discount: editableOrder.overallDiscount,
-        subtotal,
-        total: total
-      }
-    });
-    
-    setIsEditingSummary(false);
-    toast.success("Order summary updated successfully!");
+        totalAmount: total
+      };
+      
+      await updateOrder(order.id, updateData);
+      
+      // Update local state
+      setOrder(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          tax: editableOrder.tax,
+          shipping: editableOrder.shipping,
+          discount: editableOrder.overallDiscount,
+          subtotal,
+          total: total
+        }
+      });
+      
+      setIsEditingSummary(false);
+      toast.success("Order summary updated successfully!");
+    } catch (error) {
+      console.error("Error updating order summary:", error);
+      toast.error("Failed to update order summary. Please try again.");
+    }
   };
 
   const handlePrint = () => { 
@@ -267,14 +283,23 @@ const OrderDetails = () => {
           }
         };
       } else if (type === "products") {
-        // Map frontend items back to backend format
+        // Calculate new subtotal and total based on updated products
+        const subtotal = itemsForm.reduce((sum, item) => sum + (item.price * item.quantity) - (item.discount || 0), 0);
+        const total = subtotal - editableOrder.overallDiscount + editableOrder.tax + editableOrder.shipping;
+        
+        // Map frontend items back to backend format with all fields
         updateData = {
           products: itemsForm.map(item => ({
             product: item.name,
             sku: item.sku,
             price: item.price,
-            quantity: item.quantity
-          }))
+            quantity: item.quantity,
+            discount: item.discount || 0
+          })),
+          tax: editableOrder.tax,
+          shipping: editableOrder.shipping,
+          discount: editableOrder.overallDiscount,
+          totalAmount: total
         };
       }
 
@@ -300,12 +325,12 @@ const OrderDetails = () => {
             name: p.product,
             price: p.price,
             quantity: p.quantity,
-            discount: 0,
+            discount: p.discount || 0,
           })),
-          subtotal: (updatedOrder.products || []).reduce((sum, p) => sum + p.price * p.quantity, 0),
-          tax: 0,
-          shipping: 0,
-          discount: 0,
+          subtotal: (updatedOrder.products || []).reduce((sum, p) => sum + p.price * p.quantity - (p.discount || 0), 0),
+          tax: updatedOrder.tax || 0,
+          shipping: updatedOrder.shipping || 0,
+          discount: updatedOrder.discount || 0,
           total: updatedOrder.totalAmount || 0,
           salesman: typeof updatedOrder.salesman === 'object' && updatedOrder.salesman && 'name' in updatedOrder.salesman ? (updatedOrder.salesman.name as string) : undefined,
           status: (updatedOrder.status as any) || 'pending',
@@ -363,15 +388,19 @@ const OrderDetails = () => {
           <Button 
             variant="ghost" 
             onClick={() => {
-              // Always navigate back to sales progress with the dialog state if it exists
+              // Navigate back to the page the user came from
               if (location.state?.fromDialog) {
-                // Use replace to prevent adding extra history entries
+                // If coming from Sales Progress with a dialog state
                 navigate('/sales', { 
                   state: { fromDialog: location.state.fromDialog },
                   replace: true
                 });
+              } else if (location.state?.from === 'dashboard') {
+                // If coming from Dashboard
+                navigate('/dashboard', { replace: true });
               } else {
-                navigate('/sales', { replace: true });
+                // Default: go back to Orders page
+                navigate('/orders', { replace: true });
               }
             }} 
             className="mb-2 -ml-2"
