@@ -39,11 +39,11 @@ const mapStatus = (s?: string): StatusType => {
 
 const Dashboard = () => {
   const [date, setDate] = useState<DateRange | undefined>({
-    from: startOfToday(),
-    to: endOfToday(),
+    from: subDays(startOfToday(), 6),
+    to: startOfToday(),
   });
   const [isOpen, setIsOpen] = useState(false);
-  const [preset, setPreset] = useState<string>('today');
+  const [preset, setPreset] = useState<string>('last7');
   
   const { data } = useQuery({ queryKey: ['orders'], queryFn: fetchOrders });
   const orders = (data || []) as BackendOrder[];

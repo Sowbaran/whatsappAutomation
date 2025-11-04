@@ -117,6 +117,35 @@ const SalesProgress = () => {
     return allOrders.filter(o => !orders.find(order => order._id === o.id)?.salesman);
   }, [allOrders, orders]);
 
+  // Calculate active and completed orders for each salesman
+  const salesmenWithStats = useMemo(() => {
+    return salesmen.map(salesman => {
+      const salesmanOrders = orders.filter(order => {
+        const orderSalesman = order.salesman;
+        if (typeof orderSalesman === 'object' && orderSalesman && '_id' in orderSalesman) {
+          return (orderSalesman as any)._id === salesman._id;
+        }
+        return false;
+      });
+
+      const activeOrders = salesmanOrders.filter(order => {
+        const status = mapStatus(order.status);
+        return status !== 'completed' && status !== 'cancelled';
+      }).length;
+
+      const completedOrders = salesmanOrders.filter(order => {
+        const status = mapStatus(order.status);
+        return status === 'completed';
+      }).length;
+
+      return {
+        ...salesman,
+        activeOrders,
+        completedOrders
+      };
+    });
+  }, [salesmen, orders]);
+
   const handleStatusClick = (status: StatusType) => {
     // Store the status in URL hash when opening the dialog
     window.history.pushState({ statusDialog: status }, '');
@@ -319,7 +348,7 @@ const SalesProgress = () => {
               <p className="text-xs sm:text-sm font-medium">Team Members</p>
               <div className="h-[200px] overflow-y-auto pr-2 -mr-2">
                 <div className="space-y-2 pr-2">
-                  {salesmen.map((salesman) => (
+                  {salesmenWithStats.map((salesman) => (
                     <div key={String(salesman._id)} className="flex items-center justify-between p-2 hover:bg-muted/30 rounded-lg transition-colors border border-muted/20">
                       <div className="flex items-center space-x-2 overflow-hidden flex-1">
                         <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
@@ -331,13 +360,13 @@ const SalesProgress = () => {
                           <div className="flex items-center justify-between">
                             <p className="text-xs sm:text-sm font-medium truncate">{salesman.name}</p>
                             <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary">
-                              {salesman.activeOrders || 0} orders
+                              Active: {salesman.activeOrders || 0} • Completed: {salesman.completedOrders || 0}
                             </span>
                           </div>
                           <div className="w-full bg-muted/20 rounded-full h-1.5 mt-1">
                             <div 
                               className="bg-primary h-1.5 rounded-full" 
-                              style={{ width: `${Math.min(100, ((salesman.activeOrders || 0) / Math.max(1, Math.max(...salesmen.map(s => s.activeOrders || 0)))) * 100)}%` }}
+                              style={{ width: `${Math.min(100, ((salesman.activeOrders || 0) / Math.max(1, Math.max(...salesmenWithStats.map(s => s.activeOrders || 0)))) * 100)}%` }}
                             />
                           </div>
                         </div>
