@@ -135,15 +135,21 @@ const getSalesmanProfile = async (req, res) => {
 
 const getSalesmanOrders = async (req, res) => {
     try {
-    // Show orders that are not picked up and not assigned to any salesman.
-    // (Include cancelled orders so salesmen can see them; frontend should
-    // decide whether to show a pickup button based on order.status === 'pending')
-    const orders = await Order.find({ pickedUp: false, salesman: null }).populate('salesman', 'name');
-        // Attach a computed `canPickup` flag so frontend can hide the pickup button
-        // for cancelled orders (or any non-pending orders). Do not modify order objects.
+        const currentSalesmanId = req.user.id;
+        // Show orders that are either unassigned OR assigned to the current salesman
+        const orders = await Order.find({
+            $or: [
+                { salesman: null },
+                { salesman: new mongoose.Types.ObjectId(currentSalesmanId) }
+            ]
+        }).populate('salesman', 'name');
+        // Attach computed flags for pickup/drop buttons
         const out = orders.map(o => {
             const obj = (o.toObject && typeof o.toObject === 'function') ? o.toObject() : o;
-            obj.canPickup = (obj.status === 'pending' && !obj.pickedUp && (!obj.salesman || obj.salesman === null));
+            const isPendingOrProcessing = obj.status === 'pending' || obj.status === 'processing';
+            obj.pickedUp = obj.pickedUp || false;
+            obj.canPickup = isPendingOrProcessing && !obj.pickedUp;
+            obj.canDrop = isPendingOrProcessing && obj.pickedUp;
             return obj;
         });
         res.json(out);
@@ -212,9 +218,25 @@ const dropOrder = async (req, res) => {
     try {
         console.log("DropOrder called by user:", req.user);
         const { orderId } = req.params;
+        
+        // Add timeline entry for drop
+        const timelineEntry = {
+            action: 'Order Dropped by Salesman',
+            description: `Order dropped by salesman ${req.user.name}`,
+            date: new Date(),
+            updatedBy: req.user.name
+        };
+        
         const updatedOrder = await Order.findByIdAndUpdate(
             orderId,
-            { pickedUp: false, pickedUpBy: null, pickedUpAt: null, salesman: null },
+            { 
+                pickedUp: false, 
+                pickedUpBy: null, 
+                pickedUpAt: null, 
+                salesman: null,
+                status: 'pending',
+                $push: { timeline: timelineEntry }
+            },
             { new: true }
         );
         if (!updatedOrder) {

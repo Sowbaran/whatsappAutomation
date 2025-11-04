@@ -59,7 +59,7 @@ export const DashboardLayout = () => {
       {/* Sidebar */}
       {/* Sidebar: hidden on mobile unless open */}
       <aside
-        className={`fixed z-40 inset-y-0 left-0 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 lg:static lg:translate-x-0 ${sidebarOpen ? 'w-64' : 'w-20'} bg-sidebar border-r border-sidebar-border flex flex-col`}
+        className={`fixed z-40 top-0 bottom-0 left-0 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'w-64' : 'w-20'} bg-sidebar border-r border-sidebar-border flex flex-col`}
       >
         <div className="p-6 border-b border-sidebar-border flex items-center justify-between">
           {sidebarOpen && (
@@ -86,7 +86,7 @@ export const DashboardLayout = () => {
           </Button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {navigation.map((item) => {
             const isActive = location.pathname === item.href;
             return (
@@ -105,8 +105,8 @@ export const DashboardLayout = () => {
             );
           })}
         </nav>
-        {/* Sidebar Logout Button */}
-        <div className="mt-auto p-4">
+        {/* Sidebar Logout Button - Sticky at bottom */}
+        <div className="sticky bottom-0 p-4 bg-sidebar border-t border-sidebar-border">
           <Button
             variant="ghost"
             className="w-full flex items-center gap-3 text-sidebar-foreground hover:bg-sidebar-accent justify-start"
@@ -140,7 +140,7 @@ export const DashboardLayout = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className={`flex-1 flex flex-col overflow-hidden ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'} transition-all duration-300`}>
         {/* Top Bar */}
         <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 shadow-sm">
           <div className="flex items-center gap-4">

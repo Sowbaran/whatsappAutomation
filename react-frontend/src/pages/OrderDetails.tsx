@@ -408,7 +408,7 @@ const OrderDetails = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />Back
           </Button>
           <h1 className="text-3xl font-bold text-foreground">Order Details</h1>
-          <p className="text-muted-foreground">Order ID: {order.id}</p>
+          <p className="text-muted-foreground">Order ID: {order.orderNumber || order.id}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={handlePrint} className="bg-card hover:bg-muted">
@@ -640,7 +640,7 @@ const OrderDetails = () => {
 
             <div className="flex justify-between items-center pt-3 border-t border-border">
               <div className="flex items-center gap-2 text-foreground">
-                <DollarSign className="w-5 h-5" />
+                {/* <DollarSign className="w-5 h-5" /> */}
                 <span className="text-lg font-semibold">Total Amount</span>
               </div>
               <span className="text-2xl font-bold text-primary">

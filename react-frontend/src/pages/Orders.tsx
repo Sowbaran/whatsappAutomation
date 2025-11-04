@@ -58,6 +58,8 @@ const Orders = () => {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['orders'],
     queryFn: fetchOrders,
+    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   const { data: salesmenData } = useQuery({

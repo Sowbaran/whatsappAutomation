@@ -24,20 +24,23 @@ const AssignedOrders = () => {
   const { data, isLoading, isError } = useQuery({ queryKey: ["salesman","assigned-orders"], queryFn: fetchAssignedOrders });
   const orders = useMemo(() => {
     const list = (data || []) as BackendOrder[];
-    return list.map((o) => ({
-      id: o._id, // for actions
-      orderId: o.orderId, // for display
-      customerName: o.customer?.name || "",
-      customerPhone: o.customer?.phone || "",
-      customerEmail: o.customer?.email || "",
-      customerAddress: o.customer?.shippingAddress || o.customer?.billingAddress || "",
-      products: (o.products || []).map((p, idx) => ({ id: String(idx+1), name: p.product, quantity: p.quantity, price: p.price })),
-      totalAmount: o.totalAmount || 0,
-      status: (o.status?.toLowerCase() as Order["status"]) || "pending",
-      paymentStatus: ((o.payment?.status || "unpaid").toLowerCase() as Order["paymentStatus"]),
-      orderDate: o.createdAt || new Date().toISOString(),
-      salesman: typeof o.salesman === 'object' && o.salesman && 'name' in o.salesman ? (o.salesman as any).name : undefined,
-    } as Order & { orderId: string }));
+    // Filter out orders that have been dropped (pickedUp: false)
+    return list
+      .filter((o) => (o as any).pickedUp !== false)
+      .map((o) => ({
+        id: o._id, // for actions
+        orderId: o.orderId, // for display
+        customerName: o.customer?.name || "",
+        customerPhone: o.customer?.phone || "",
+        customerEmail: o.customer?.email || "",
+        customerAddress: o.customer?.shippingAddress || o.customer?.billingAddress || "",
+        products: (o.products || []).map((p, idx) => ({ id: String(idx+1), name: p.product, quantity: p.quantity, price: p.price })),
+        totalAmount: o.totalAmount || 0,
+        status: (o.status?.toLowerCase() as Order["status"]) || "pending",
+        paymentStatus: ((o.payment?.status || "unpaid").toLowerCase() as Order["paymentStatus"]),
+        orderDate: o.createdAt || new Date().toISOString(),
+        salesman: typeof o.salesman === 'object' && o.salesman && 'name' in o.salesman ? (o.salesman as any).name : undefined,
+      } as Order & { orderId: string }));
   }, [data]);
   const navigate = useNavigate();
 

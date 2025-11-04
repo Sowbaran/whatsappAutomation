@@ -23,25 +23,32 @@ const Orders = () => {
   const { data, isLoading, isError } = useQuery({ queryKey: ["salesman","all-orders"], queryFn: fetchAllOrdersForSalesman });
   const orders = useMemo(() => {
     const list = (data || []) as BackendOrder[];
-    // Only show orders where salesman is null or not set
-    return list.filter(o => !o.salesman).map((o) => ({
-      id: o._id, // for actions
-      orderId: o.orderId, // for display
-      customerName: o.customer?.name || "",
-      customerPhone: o.customer?.phone || "",
-      customerEmail: o.customer?.email || "",
-      customerAddress: o.customer?.shippingAddress || o.customer?.billingAddress || "",
-      products: (o.products || []).map((p, idx) => ({ id: String(idx+1), name: p.product, quantity: p.quantity, price: p.price })),
-      totalAmount: o.totalAmount || 0,
-  status: (o.status?.toLowerCase() as Order["status"]) || "pending",
-  // backend now attaches a computed `canPickup` flag; fallback to old logic if missing
-  canPickup: (o as any).canPickup ?? ((o.status === 'pending' || (o.status && String(o.status).toLowerCase() === 'pending')) && !( (o as any).pickedUp ) && (!o.salesman || o.salesman === null)),
-      paymentStatus: ((o.payment?.status || "unpaid").toLowerCase() as Order["paymentStatus"]),
-      orderDate: o.createdAt || new Date().toISOString(),
-      salesman: typeof o.salesman === 'object' && o.salesman && 'name' in o.salesman ? (o.salesman as any).name : undefined,
-  } as Order & { orderId: string, canPickup?: boolean }));
+    // Show all orders (no filtering by salesman)
+    return list.map((o) => {
+      const status = (o.status?.toLowerCase() as Order["status"]) || "pending";
+      const pickedUp = (o as any).pickedUp || false;
+      const isPendingOrProcessing = status === 'pending' || status === 'processing';
+      
+      return {
+        id: o._id, // for actions
+        orderId: o.orderId, // for display
+        customerName: o.customer?.name || "",
+        customerPhone: o.customer?.phone || "",
+        customerEmail: o.customer?.email || "",
+        customerAddress: o.customer?.shippingAddress || o.customer?.billingAddress || "",
+        products: (o.products || []).map((p, idx) => ({ id: String(idx+1), name: p.product, quantity: p.quantity, price: p.price })),
+        totalAmount: o.totalAmount || 0,
+        status: status,
+        pickedUp: pickedUp,
+        canPickup: isPendingOrProcessing && !pickedUp,
+        canDrop: pickedUp, // Show drop button for any picked up order
+        paymentStatus: ((o.payment?.status || "unpaid").toLowerCase() as Order["paymentStatus"]),
+        orderDate: o.createdAt || new Date().toISOString(),
+        salesman: typeof o.salesman === 'object' && o.salesman && 'name' in o.salesman ? (o.salesman as any).name : undefined,
+      } as Order & { orderId: string, pickedUp?: boolean, canPickup?: boolean, canDrop?: boolean };
+    });
   }, [data]);
-  const [selectedOrder, setSelectedOrder] = useState<(Order & { orderId: string }) | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<(Order & { orderId: string, pickedUp?: boolean, canPickup?: boolean, canDrop?: boolean }) | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     orderId: string;
@@ -67,8 +74,20 @@ const Orders = () => {
 
   const pickupMut = useMutation({
     mutationFn: (id: string) => pickupOrder(id),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       toast.success("Order picked up successfully!");
+      
+      // Optimistically update the order in cache to show drop button immediately
+      queryClient.setQueryData(["salesman","all-orders"], (oldData: BackendOrder[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(order => 
+          order._id === id 
+            ? { ...order, pickedUp: true } 
+            : order
+        );
+      });
+      
+      // Then refresh from server
       queryClient.invalidateQueries({ queryKey: ["salesman","assigned-orders"] });
       queryClient.invalidateQueries({ queryKey: ["salesman","all-orders"] });
       setConfirmDialog({ open: false, orderId: "", action: "pickup" });
@@ -77,8 +96,20 @@ const Orders = () => {
   });
   const dropMut = useMutation({
     mutationFn: (id: string) => dropOrder(id),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       toast.success("Order dropped. Available for re-pickup.");
+      
+      // Optimistically update the order in cache to show pickup button immediately
+      queryClient.setQueryData(["salesman","all-orders"], (oldData: BackendOrder[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(order => 
+          order._id === id 
+            ? { ...order, pickedUp: false } 
+            : order
+        );
+      });
+      
+      // Then refresh from server
       queryClient.invalidateQueries({ queryKey: ["salesman","assigned-orders"] });
       queryClient.invalidateQueries({ queryKey: ["salesman","all-orders"] });
       setConfirmDialog({ open: false, orderId: "", action: "pickup" });
@@ -92,7 +123,7 @@ const Orders = () => {
     else dropMut.mutate(orderId);
   };
 
-  const showDetails = (order: Order & { orderId: string }) => {
+  const showDetails = (order: Order & { orderId: string, pickedUp?: boolean, canPickup?: boolean, canDrop?: boolean }) => {
     setSelectedOrder(order);
     setDetailsDialog(true);
   };
@@ -195,19 +226,20 @@ const Orders = () => {
                     <Button
                       size="sm"
                       onClick={() => handlePickup(order.id)}
-                      className="flex-1 bg-primary hover:bg-primary-dark"
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                     >
                       <Package className="w-4 h-4 mr-1" />
                       Pickup
                     </Button>
                   )}
-                  {order.status === "picked-up" && (
+                  {order.canDrop && (
                     <Button
                       size="sm"
                       variant="destructive"
                       onClick={() => handleDrop(order.id)}
                       className="flex-1"
                     >
+                      <Package className="w-4 h-4 mr-1" />
                       Drop
                     </Button>
                   )}
@@ -277,18 +309,19 @@ const Orders = () => {
                         <Button
                           size="sm"
                           onClick={() => handlePickup(order.id)}
-                          className="bg-primary hover:bg-primary-dark"
+                          className="bg-green-600 hover:bg-green-700 text-white"
                         >
                           <Package className="w-4 h-4 mr-1" />
                           Pickup
                         </Button>
                       )}
-                      {order.status === "picked-up" && (
+                      {order.canDrop && (
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => handleDrop(order.id)}
                         >
+                          <Package className="w-4 h-4 mr-1" />
                           Drop
                         </Button>
                       )}

@@ -84,6 +84,7 @@ const OrderDetails = () => {
         // Map backend order to frontend order format
         const mappedOrder: Order = {
           id: backendOrder._id,
+          orderId: backendOrder.orderId, // Human-readable order ID
           customerName: backendOrder.customer?.name || '',
           customerPhone: backendOrder.customer?.phone || '',
           customerEmail: backendOrder.customer?.email || '',
@@ -437,7 +438,7 @@ const OrderDetails = () => {
               <div className="w-full flex flex-col sm:flex-row sm:justify-between gap-4 mb-4">
                 <div>
                   <h1 className="text-3xl font-bold text-foreground">Order Details</h1>
-                  <p className="text-muted-foreground">Order ID: {order.id}</p>
+                  <p className="text-muted-foreground">Order ID: {order.orderId || order.id}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={handlePrint} className="bg-card hover:bg-muted">

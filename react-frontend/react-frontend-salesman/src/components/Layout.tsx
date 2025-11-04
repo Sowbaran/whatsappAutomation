@@ -76,7 +76,7 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-40 w-64 bg-sidebar transform transition-transform duration-300 ease-in-out lg:transform-none",
+          "fixed inset-y-0 left-0 z-40 w-64 bg-sidebar transform transition-transform duration-300 ease-in-out",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
@@ -101,7 +101,7 @@ const Layout = ({ children }: LayoutProps) => {
 
           {/* Navigation */}
           <nav className="flex-1 p-4 mt-16 lg:mt-0 flex flex-col h-[calc(100%-theme(spacing.16))]">
-            <ul className="space-y-2 flex-1">
+            <ul className="space-y-2 flex-1 overflow-y-auto">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -125,8 +125,8 @@ const Layout = ({ children }: LayoutProps) => {
               })}
             </ul>
             
-            {/* Logout Button */}
-            <div className="mt-auto pt-4 border-t border-sidebar-border">
+            {/* Logout Button - Sticky at bottom */}
+            <div className="sticky bottom-0 pt-4 border-t border-sidebar-border bg-sidebar">
               <button
                 onClick={() => setShowLogoutDialog(true)}
                 className={cn(
@@ -180,7 +180,7 @@ const Layout = ({ children }: LayoutProps) => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto pt-16 lg:pt-0">
+      <main className="flex-1 overflow-auto pt-16 lg:pt-0 lg:ml-64 transition-all duration-300">
         <div className="p-4 lg:p-6 max-w-7xl mx-auto">{children}</div>
       </main>
     </div>

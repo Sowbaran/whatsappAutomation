@@ -12,10 +12,9 @@ const Customers = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const { data: customersData } = useQuery({ queryKey: ['customers'], queryFn: fetchCustomers });
   const { data: ordersData } = useQuery({ queryKey: ['orders'], queryFn: fetchOrders });
-  const [customers, setCustomers] = useState(() => [] as Array<any>);
 
   const orders = (ordersData || []) as BackendOrder[];
-  const mappedCustomers = useMemo(() => {
+  const customers = useMemo(() => {
     const cs = (customersData || []) as BackendCustomer[];
     return cs.map((c, idx) => {
       const relatedOrders = orders.filter(o => o.customer?.email && c.email && o.customer.email === c.email);
@@ -31,13 +30,6 @@ const Customers = () => {
       };
     });
   }, [customersData, orders]);
-
-  // initialize local state once data arrives
-  if (customers.length === 0 && mappedCustomers.length > 0) {
-    // Not using useEffect to keep minimal changes and avoid extra imports
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    setCustomers(mappedCustomers);
-  }
 
   const filteredCustomers = customers.filter(customer =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -138,10 +130,9 @@ const Customers = () => {
             payment: { status: o.payment?.status || 'unpaid', method: o.payment?.method || '-' }
           }))}
           onSave={(updatedCustomer) => {
-            setCustomers((prev) =>
-              prev.map((c) => (c.id === updatedCustomer.id ? updatedCustomer : c))
-            );
+            // Update the selected customer to reflect changes in the dialog
             setSelectedCustomer(updatedCustomer);
+            // Note: The customers list will automatically update on next data refresh from React Query
           }}
         />
       )}

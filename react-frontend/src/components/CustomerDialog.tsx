@@ -1,11 +1,17 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function CustomerDialog({ open, onOpenChange, customer, orders, onSave }) {
   const [editableCustomer, setEditableCustomer] = useState(customer);
   const [editMode, setEditMode] = useState(false);
+
+  // Update editableCustomer when customer prop changes
+  useEffect(() => {
+    setEditableCustomer(customer);
+    setEditMode(false); // Reset edit mode when customer changes
+  }, [customer]);
 
   // Calculate payment details based on name/email/phone for robust matching
   const customerOrders = orders.filter(

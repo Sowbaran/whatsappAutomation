@@ -8,6 +8,7 @@ export interface Product {
 
 export interface Order {
   id: string;
+  orderId?: string; // Human-readable order ID like ORD1011
   customerName: string;
   customerPhone: string;
   customerEmail?: string;

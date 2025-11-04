@@ -57,24 +57,11 @@ router.put('/pickup/:orderId', authMiddleware, async (req, res) => {
     }
 });
 
-// Drop an order
-router.put('/drop/:orderId', authMiddleware, (req, res) => {
-    const { orderId } = req.params;
-    Order.findByIdAndUpdate(orderId, { pickedUp: false, pickedUpBy: null, pickedUpAt: null }, { new: true })
-        .then(order => {
-            if (!order) {
-                return res.status(404).json({ error: 'Order not found' });
-            }
-            res.json(order);
-        })
-        .catch(err => res.status(500).json({ error: err.message }));
-});
-
 // Pickup order (old endpoint)
 router.put('/pickup/:id', authMiddleware, pickupOrder);
 
-// Drop order (old endpoint)
-router.put('/drop/:id', authMiddleware, dropOrder);
+// Drop order (uses proper dropOrder controller)
+router.put('/drop/:orderId', authMiddleware, dropOrder);
 
 // Get a specific salesman by ID (including password hash)
 router.get('/:id', async (req, res) => {
